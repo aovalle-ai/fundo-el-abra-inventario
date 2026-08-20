@@ -679,20 +679,42 @@ body {
 
   <!-- ── PAGE: Combustible ── -->
   <div class="page" id="page-combustible">
-    <div class="section-header">
-      <div class="section-title">Combustible</div>
-      <button class="btn btn-sm btn-amber" onclick="openFuelModal()">+ Registrar</button>
+    <div class="toggle-tabs" id="combustibleTabs">
+      <button class="toggle-tab active" onclick="setCombustibleTab('inventario',this)">Inventario</button>
+      <button class="toggle-tab" onclick="setCombustibleTab('movimientos',this)">Movimientos</button>
     </div>
 
-    <div class="toggle-tabs" id="fuelFilter">
-      <button class="toggle-tab active" data-filter="all" onclick="setFuelFilter('all',this)">Todo</button>
-      <button class="toggle-tab" data-filter="petroleo" onclick="setFuelFilter('petroleo',this)">Petróleo</button>
-      <button class="toggle-tab" data-filter="bencina" onclick="setFuelFilter('bencina',this)">Bencina</button>
+    <!-- Inventario sub-view -->
+    <div id="combustible-inventario">
+      <div class="section-header">
+        <div class="section-title">Stock de Combustible</div>
+      </div>
+      <div id="fuelStockList"></div>
     </div>
 
-    <div class="card">
-      <div id="fuelList">
-        <div class="empty-state"><p>Sin registros de combustible</p></div>
+    <!-- Movimientos sub-view -->
+    <div id="combustible-movimientos" style="display:none">
+      <div class="section-header">
+        <div class="section-title">Movimientos de Combustible</div>
+        <div class="btn-row">
+          <button class="btn btn-sm btn-primary" onclick="openFuelModal('ingreso')">+ Ingreso</button>
+          <button class="btn btn-sm btn-danger" onclick="openFuelModal('salida')">- Salida</button>
+        </div>
+      </div>
+      <div class="toggle-tabs" id="fuelFilter">
+        <button class="toggle-tab active" data-filter="all" onclick="setFuelFilter('all',this)">Todo</button>
+        <button class="toggle-tab" data-filter="petroleo" onclick="setFuelFilter('petroleo',this)">Petróleo</button>
+        <button class="toggle-tab" data-filter="bencina" onclick="setFuelFilter('bencina',this)">Bencina</button>
+      </div>
+      <div class="filter-bar" id="fuelMovFilter">
+        <button class="filter-chip active" onclick="setFuelMovFilter('all',this)">Todo</button>
+        <button class="filter-chip" onclick="setFuelMovFilter('ingreso',this)">Ingresos</button>
+        <button class="filter-chip" onclick="setFuelMovFilter('salida',this)">Salidas</button>
+      </div>
+      <div class="card">
+        <div id="fuelList">
+          <div class="empty-state"><p>Sin registros de combustible</p></div>
+        </div>
       </div>
     </div>
   </div>
@@ -709,6 +731,25 @@ body {
       <div class="section-header">
         <div class="section-title">Productos</div>
         <button class="btn btn-sm btn-primary" onclick="openProductModal()">+ Producto</button>
+      </div>
+      <div class="form-group" style="margin-bottom:8px">
+        <input type="text" id="prodListSearch" placeholder="Buscar por nombre o ingrediente activo..." oninput="renderProducts()">
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <select id="prodListCategoryFilter" onchange="renderProducts()" style="flex:1;padding:12px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:13px;background:white;color:var(--gray-800)">
+          <option value="">Todos los tipos</option>
+          <option value="fertilizante">Fertilizante</option>
+          <option value="pesticida">Pesticida</option>
+          <option value="semilla">Semilla</option>
+          <option value="herramienta">Herramienta</option>
+          <option value="insumo">Insumo</option>
+          <option value="otro">Otro</option>
+        </select>
+        <select id="prodListSort" onchange="renderProducts()" style="flex:1;padding:12px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:13px;background:white;color:var(--gray-800)">
+          <option value="name">Ordenar: Nombre</option>
+          <option value="stock_desc">Cantidad: mayor a menor</option>
+          <option value="stock_asc">Cantidad: menor a mayor</option>
+        </select>
       </div>
       <div id="productList">
         <div class="empty-state"><p>Sin productos registrados</p></div>
@@ -757,9 +798,19 @@ body {
     <div class="card">
       <div class="card-title">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        Resumen del mes
+        Movimientos y costos
       </div>
-      <div id="monthSummary"></div>
+      <div class="toggle-tabs" id="reportTypeTabs">
+        <button class="toggle-tab active" onclick="setReportType('bodega',this)">Bodega</button>
+        <button class="toggle-tab" onclick="setReportType('combustible',this)">Combustible</button>
+      </div>
+      <div class="toggle-tabs" id="reportPeriodTabs">
+        <button class="toggle-tab active" onclick="setReportPeriod('week',this)">Semana</button>
+        <button class="toggle-tab" onclick="setReportPeriod('month',this)">Mes</button>
+      </div>
+      <div id="reportSummary"></div>
+      <div id="reportChart"></div>
+      <div id="reportTable"></div>
     </div>
 
     <div class="card">
@@ -802,7 +853,7 @@ body {
 <div class="modal-overlay" id="fuelModal">
   <div class="modal-content">
     <div class="modal-header">
-      <h2>Registrar Combustible</h2>
+      <h2 id="fuelModalTitle">Ingreso de Combustible</h2>
       <button class="modal-close" onclick="closeModal('fuelModal')">&times;</button>
     </div>
     <div class="form-group">
@@ -817,14 +868,19 @@ body {
       </select>
     </div>
     <div class="form-group">
-      <label>Litros</label>
-      <input type="number" id="fuelLiters" placeholder="Ej: 50" min="0" step="0.1" inputmode="decimal">
+      <label id="fuelLitersLabel">Litros a ingresar</label>
+      <input type="number" id="fuelLiters" placeholder="Ej: 50" min="0.1" step="0.1" inputmode="decimal">
+    </div>
+    <div class="form-group" id="fuelCostGroup" style="display:none">
+      <label>Costo total del ingreso</label>
+      <input type="number" id="fuelCost" placeholder="Ej: 45000" min="0" step="1" inputmode="decimal">
     </div>
     <div class="form-group">
       <label>Nota (opcional)</label>
       <textarea id="fuelNote" placeholder="Ej: Tractor John Deere, potrero norte"></textarea>
     </div>
-    <button class="btn btn-amber" onclick="saveFuel()">Guardar registro</button>
+    <input type="hidden" id="fuelMovType">
+    <button class="btn btn-amber" id="fuelSubmitBtn" onclick="saveFuel()">Guardar registro</button>
   </div>
 </div>
 
@@ -910,6 +966,10 @@ body {
         <option value="OTRO">Otro</option>
       </select>
     </div>
+    <div class="form-group" id="movCostGroup" style="display:none">
+      <label>Costo total del ingreso</label>
+      <input type="number" id="movCost" placeholder="Ej: 45000" min="0" step="1" inputmode="decimal">
+    </div>
     <div class="form-group">
       <label id="movQtyLabel">Cantidad a ingresar</label>
       <input type="number" id="movQty" placeholder="Ej: 25" min="0.1" step="0.1" inputmode="decimal">
@@ -931,7 +991,7 @@ body {
 //  DATABASE (IndexedDB)
 // ═══════════════════════════════════════════
 const DB_NAME = 'fundoElAbraDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 let db;
 
 function openDB() {
@@ -952,6 +1012,9 @@ function openDB() {
         m.createIndex('date', 'date');
         m.createIndex('productId', 'productId');
         m.createIndex('type', 'type');
+      }
+      if (!d.objectStoreNames.contains('fuelStock')) {
+        d.createObjectStore('fuelStock', { keyPath: 'type' });
       }
     };
     req.onsuccess = (e) => { db = e.target.result; resolve(db); };
@@ -1018,6 +1081,14 @@ function today() {
 function formatDate(d) {
   const [y, m, dd] = d.split('-');
   return `${dd}/${m}/${y}`;
+}
+
+function round2(n) {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
+function formatCLP(n) {
+  return '$' + Math.round(n || 0).toLocaleString('es-CL');
 }
 
 function shortDate(d) {
@@ -1174,9 +1245,17 @@ async function seedInitialProducts() {
       unit: p.unit,
       stock: p.stock,
       minStock: 0,
+      totalValue: 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     });
+  }
+}
+
+async function seedFuelStock() {
+  for (const t of ['petroleo', 'bencina']) {
+    const existing = await dbGet('fuelStock', t);
+    if (!existing) await dbAdd('fuelStock', { type: t, stock: 0, totalValue: 0 });
   }
 }
 
@@ -1229,47 +1308,93 @@ function showPage(page, el) {
 }
 
 function onFabClick() {
-  if (currentPage === 'combustible') openFuelModal();
+  if (currentPage === 'combustible') openFuelModal('ingreso');
   else if (currentPage === 'bodega') openProductModal();
-  else openFuelModal();
+  else openFuelModal('ingreso');
 }
 
 // ═══════════════════════════════════════════
 //  FUEL
 // ═══════════════════════════════════════════
 let fuelFilterType = 'all';
+let fuelMovFilterType = 'all';
+let combustibleTab = 'inventario';
 
-function openFuelModal() {
+function setCombustibleTab(tab, el) {
+  combustibleTab = tab;
+  document.querySelectorAll('#combustibleTabs .toggle-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('combustible-inventario').style.display = tab === 'inventario' ? 'block' : 'none';
+  document.getElementById('combustible-movimientos').style.display = tab === 'movimientos' ? 'block' : 'none';
+}
+
+function openFuelModal(movType) {
+  movType = movType || 'ingreso';
+  document.getElementById('fuelMovType').value = movType;
+  document.getElementById('fuelModalTitle').textContent = movType === 'ingreso' ? 'Ingreso de Combustible' : 'Salida de Combustible';
+  document.getElementById('fuelLitersLabel').textContent = movType === 'ingreso' ? 'Litros a ingresar' : 'Litros consumidos';
+  document.getElementById('fuelCostGroup').style.display = movType === 'ingreso' ? 'block' : 'none';
+  document.getElementById('fuelSubmitBtn').className = movType === 'ingreso' ? 'btn btn-amber' : 'btn btn-danger';
+  document.getElementById('fuelSubmitBtn').textContent = movType === 'ingreso' ? 'Registrar ingreso' : 'Registrar salida';
   document.getElementById('fuelDate').value = today();
   document.getElementById('fuelType').value = 'petroleo';
   document.getElementById('fuelLiters').value = '';
+  document.getElementById('fuelCost').value = '';
   document.getElementById('fuelNote').value = '';
   openModal('fuelModal');
 }
 
 async function saveFuel() {
+  const movType = document.getElementById('fuelMovType').value || 'ingreso';
   const date = document.getElementById('fuelDate').value;
   const type = document.getElementById('fuelType').value;
   const liters = parseFloat(document.getElementById('fuelLiters').value);
+  const costInput = document.getElementById('fuelCost').value;
   const note = document.getElementById('fuelNote').value.trim();
 
   if (!date || !liters || liters <= 0) {
     showToast('Completa fecha y litros');
     return;
   }
+  if (movType === 'ingreso' && costInput === '') {
+    showToast('Ingresa el costo total del ingreso');
+    return;
+  }
+
+  let fs = await dbGet('fuelStock', type);
+  if (!fs) fs = { type, stock: 0, totalValue: 0 };
+
+  let cost;
+  if (movType === 'ingreso') {
+    cost = parseFloat(costInput) || 0;
+    fs.stock = round2(fs.stock + liters);
+    fs.totalValue = round2(fs.totalValue + cost);
+  } else {
+    if (liters > fs.stock) {
+      showToast(`Stock insuficiente (disponible: ${fs.stock} lt)`);
+      return;
+    }
+    const avgCost = fs.stock > 0 ? fs.totalValue / fs.stock : 0;
+    cost = round2(avgCost * liters);
+    fs.stock = round2(fs.stock - liters);
+    fs.totalValue = Math.max(0, round2(fs.totalValue - cost));
+  }
+  await dbPut('fuelStock', fs);
 
   await dbAdd('fuel', {
     id: genId(),
     date,
     type,
+    movType,
     liters,
+    cost,
     note,
     operator: currentUser.name,
     createdAt: new Date().toISOString()
   });
 
   closeModal('fuelModal');
-  showToast('Combustible registrado');
+  showToast(movType === 'ingreso' ? 'Ingreso registrado' : 'Salida registrada');
   refreshAll();
 }
 
@@ -1280,9 +1405,44 @@ function setFuelFilter(type, el) {
   renderFuel();
 }
 
+function setFuelMovFilter(type, el) {
+  fuelMovFilterType = type;
+  document.querySelectorAll('#fuelMovFilter .filter-chip').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderFuel();
+}
+
+async function renderFuelStock() {
+  const petro = (await dbGet('fuelStock', 'petroleo')) || { type: 'petroleo', stock: 0, totalValue: 0 };
+  const benc = (await dbGet('fuelStock', 'bencina')) || { type: 'bencina', stock: 0, totalValue: 0 };
+
+  const card = (f, label, icon) => {
+    const avg = f.stock > 0 ? f.totalValue / f.stock : 0;
+    return `
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="list-icon fuel">${icon}</div>
+        <div style="flex:1;min-width:0">
+          <div class="list-title">${label}</div>
+          <div class="list-sub">${avg > 0 ? 'Costo prom.: ' + formatCLP(avg) + ' /lt' : 'Sin costo registrado'}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:20px;font-weight:700;color:var(--amber-600)">${round2(f.stock)}</div>
+          <div style="font-size:11px;color:var(--gray-400)">litros</div>
+        </div>
+      </div>
+      ${f.totalValue > 0 ? `<div style="font-size:11px;color:var(--gray-500);margin-top:8px">Valor total en stock: ${formatCLP(f.totalValue)}</div>` : ''}
+    </div>`;
+  };
+
+  document.getElementById('fuelStockList').innerHTML =
+    card(petro, 'Petróleo (Diésel)', '&#9981;') + card(benc, 'Bencina', '&#9979;');
+}
+
 async function renderFuel() {
   let items = await dbGetAll('fuel');
   if (fuelFilterType !== 'all') items = items.filter(i => i.type === fuelFilterType);
+  if (fuelMovFilterType !== 'all') items = items.filter(i => (i.movType || 'salida') === fuelMovFilterType);
   items.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
 
   const el = document.getElementById('fuelList');
@@ -1291,21 +1451,41 @@ async function renderFuel() {
     return;
   }
 
-  el.innerHTML = items.map(i => `
+  el.innerHTML = items.map(i => {
+    const mt = i.movType || 'salida';
+    return `
     <div class="list-item">
-      <div class="list-icon fuel">${i.type === 'petroleo' ? '&#9981;' : '&#9979;'}</div>
+      <div class="list-icon ${mt === 'ingreso' ? 'ingreso' : 'salida'}">${mt === 'ingreso' ? '&#8599;' : '&#8600;'}</div>
       <div class="list-content">
         <div class="list-title">${i.type === 'petroleo' ? 'Petróleo' : 'Bencina'}</div>
         <div class="list-sub">${formatDate(i.date)} &middot; ${i.operator}${i.note ? ' &middot; ' + i.note : ''}</div>
       </div>
-      <div class="list-value negative">-${i.liters} lt</div>
+      <div style="text-align:right">
+        <div class="list-value ${mt === 'ingreso' ? 'positive' : 'negative'}">${mt === 'ingreso' ? '+' : '-'}${i.liters} lt</div>
+        ${i.cost ? `<div style="font-size:11px;color:var(--gray-400)">${formatCLP(i.cost)}</div>` : ''}
+      </div>
       <button class="list-delete" onclick="deleteFuel('${i.id}')" title="Eliminar">&times;</button>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 async function deleteFuel(id) {
   if (!confirm('¿Eliminar este registro?')) return;
+  const f = await dbGet('fuel', id);
+  if (f && f.movType) {
+    let fs = await dbGet('fuelStock', f.type);
+    if (fs) {
+      if (f.movType === 'ingreso') {
+        fs.stock = round2(fs.stock - f.liters);
+        fs.totalValue = Math.max(0, round2(fs.totalValue - (f.cost || 0)));
+      } else {
+        fs.stock = round2(fs.stock + f.liters);
+        fs.totalValue = round2(fs.totalValue + (f.cost || 0));
+      }
+      await dbPut('fuelStock', fs);
+    }
+  }
   await dbDelete('fuel', id);
   showToast('Registro eliminado');
   refreshAll();
@@ -1349,6 +1529,12 @@ async function saveProduct() {
 
   if (!name) { showToast('Ingresa el nombre del producto'); return; }
 
+  let totalValue = 0;
+  if (editId) {
+    const existing = await dbGet('products', editId);
+    totalValue = existing && typeof existing.totalValue === 'number' ? existing.totalValue : 0;
+  }
+
   const data = {
     id: editId || genId(),
     name,
@@ -1357,6 +1543,7 @@ async function saveProduct() {
     unit,
     stock,
     minStock,
+    totalValue,
     updatedAt: new Date().toISOString()
   };
   if (!editId) data.createdAt = new Date().toISOString();
@@ -1380,18 +1567,31 @@ async function deleteProduct(id) {
 }
 
 async function renderProducts() {
-  const items = await dbGetAll('products');
-  items.sort((a, b) => a.name.localeCompare(b.name));
+  const all = await dbGetAll('products');
+  const q = (document.getElementById('prodListSearch').value || '').trim().toLowerCase();
+  const catFilter = document.getElementById('prodListCategoryFilter').value;
+  const sortMode = document.getElementById('prodListSort').value;
+
+  let items = all.filter(p => {
+    if (catFilter && p.category !== catFilter) return false;
+    if (q && !(p.name.toLowerCase().includes(q) || (p.activo && p.activo.toLowerCase().includes(q)))) return false;
+    return true;
+  });
+
+  if (sortMode === 'stock_desc') items.sort((a, b) => b.stock - a.stock);
+  else if (sortMode === 'stock_asc') items.sort((a, b) => a.stock - b.stock);
+  else items.sort((a, b) => a.name.localeCompare(b.name));
 
   const el = document.getElementById('productList');
   if (!items.length) {
-    el.innerHTML = '<div class="empty-state"><p>Sin productos registrados</p></div>';
+    el.innerHTML = '<div class="empty-state"><p>Sin productos que coincidan</p></div>';
     return;
   }
 
   el.innerHTML = items.map(p => {
     const pct = p.minStock > 0 ? Math.min(100, (p.stock / (p.minStock * 3)) * 100) : 100;
     const color = p.stock <= p.minStock ? 'var(--red-600)' : p.stock <= p.minStock * 1.5 ? 'var(--amber-600)' : 'var(--green-600)';
+    const avgCost = p.stock > 0 ? (p.totalValue || 0) / p.stock : 0;
     return `
     <div class="card" style="cursor:pointer" onclick="openProductModal('${p.id}')">
       <div style="display:flex;align-items:center;gap:12px">
@@ -1407,6 +1607,7 @@ async function renderProducts() {
         <button class="list-delete" onclick="event.stopPropagation();deleteProduct('${p.id}')" title="Eliminar">&times;</button>
       </div>
       <div class="stock-bar"><div class="stock-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      ${avgCost > 0 ? `<div style="font-size:11px;color:var(--gray-500);margin-top:6px">Costo prom.: ${formatCLP(avgCost)}/${p.unit} &middot; Valor total: ${formatCLP(p.totalValue)}</div>` : ''}
       ${p.stock <= p.minStock ? '<div style="font-size:11px;color:var(--red-600);margin-top:6px;font-weight:600">&#9888; Stock bajo (mínimo: ' + p.minStock + ' ' + p.unit + ')</div>' : ''}
     </div>`;
   }).join('');
@@ -1436,6 +1637,8 @@ async function openMovementModal(type) {
   document.getElementById('movSubmitBtn').textContent = type === 'ingreso' ? 'Registrar ingreso' : 'Registrar salida';
   document.getElementById('movCostCenterGroup').style.display = type === 'salida' ? 'block' : 'none';
   document.getElementById('movCostCenter').value = '';
+  document.getElementById('movCostGroup').style.display = type === 'ingreso' ? 'block' : 'none';
+  document.getElementById('movCost').value = '';
   document.getElementById('movDate').value = today();
   document.getElementById('movQty').value = '';
   document.getElementById('movNote').value = '';
@@ -1493,11 +1696,13 @@ async function saveMovement() {
   const date = document.getElementById('movDate').value;
   const productId = document.getElementById('movProduct').value;
   const costCenter = document.getElementById('movCostCenter').value;
+  const costInput = document.getElementById('movCost').value;
   const qty = parseFloat(document.getElementById('movQty').value);
   const note = document.getElementById('movNote').value.trim();
 
   if (!productId) { showToast('Selecciona un producto de la lista'); return; }
   if (type === 'salida' && !costCenter) { showToast('Selecciona el centro de costo'); return; }
+  if (type === 'ingreso' && costInput === '') { showToast('Ingresa el costo total del ingreso'); return; }
   if (!qty || qty <= 0) { showToast('Ingresa una cantidad válida'); return; }
 
   const product = await dbGet('products', productId);
@@ -1508,10 +1713,18 @@ async function saveMovement() {
     return;
   }
 
-  // Update product stock
-  product.stock = type === 'ingreso'
-    ? Math.round((product.stock + qty) * 100) / 100
-    : Math.round((product.stock - qty) * 100) / 100;
+  // Update product stock and cost basis (weighted average)
+  let cost;
+  if (type === 'ingreso') {
+    cost = parseFloat(costInput) || 0;
+    product.stock = round2(product.stock + qty);
+    product.totalValue = round2((product.totalValue || 0) + cost);
+  } else {
+    const avgCost = product.stock > 0 ? (product.totalValue || 0) / product.stock : 0;
+    cost = round2(avgCost * qty);
+    product.stock = round2(product.stock - qty);
+    product.totalValue = Math.max(0, round2((product.totalValue || 0) - cost));
+  }
   product.updatedAt = new Date().toISOString();
   await dbPut('products', product);
 
@@ -1524,6 +1737,7 @@ async function saveMovement() {
     productName: product.name,
     productUnit: product.unit,
     quantity: qty,
+    cost,
     costCenter: type === 'salida' ? costCenter : '',
     note,
     operator: currentUser.name,
@@ -1560,8 +1774,9 @@ async function renderMovements() {
         <div class="list-title">${m.productName}</div>
         <div class="list-sub">${formatDate(m.date)} &middot; ${m.operator}${m.costCenter ? ' &middot; ' + m.costCenter : ''}${m.note ? ' &middot; ' + m.note : ''}</div>
       </div>
-      <div class="list-value ${m.type === 'ingreso' ? 'positive' : 'negative'}">
-        ${m.type === 'ingreso' ? '+' : '-'}${m.quantity} ${m.productUnit}
+      <div style="text-align:right">
+        <div class="list-value ${m.type === 'ingreso' ? 'positive' : 'negative'}">${m.type === 'ingreso' ? '+' : '-'}${m.quantity} ${m.productUnit}</div>
+        ${m.cost ? `<div style="font-size:11px;color:var(--gray-400)">${formatCLP(m.cost)}</div>` : ''}
       </div>
       <button class="list-delete" onclick="deleteMovement('${m.id}')" title="Eliminar">&times;</button>
     </div>
@@ -1574,9 +1789,13 @@ async function deleteMovement(id) {
   if (mov) {
     const product = await dbGet('products', mov.productId);
     if (product) {
-      product.stock = mov.type === 'ingreso'
-        ? Math.round((product.stock - mov.quantity) * 100) / 100
-        : Math.round((product.stock + mov.quantity) * 100) / 100;
+      if (mov.type === 'ingreso') {
+        product.stock = round2(product.stock - mov.quantity);
+        product.totalValue = Math.max(0, round2((product.totalValue || 0) - (mov.cost || 0)));
+      } else {
+        product.stock = round2(product.stock + mov.quantity);
+        product.totalValue = round2((product.totalValue || 0) + (mov.cost || 0));
+      }
       await dbPut('products', product);
     }
     await dbDelete('movements', id);
@@ -1596,8 +1815,8 @@ async function renderDashboard() {
   const todayStr = today();
   const monthStr = todayStr.slice(0, 7);
 
-  const fuelToday = fuels.filter(f => f.date === todayStr).reduce((s, f) => s + f.liters, 0);
-  const fuelMonth = fuels.filter(f => f.date.startsWith(monthStr)).reduce((s, f) => s + f.liters, 0);
+  const fuelToday = fuels.filter(f => f.date === todayStr && (f.movType || 'salida') === 'salida').reduce((s, f) => s + f.liters, 0);
+  const fuelMonth = fuels.filter(f => f.date.startsWith(monthStr) && (f.movType || 'salida') === 'salida').reduce((s, f) => s + f.liters, 0);
   const lowStock = products.filter(p => p.stock <= p.minStock).length;
 
   document.getElementById('statFuelToday').textContent = Math.round(fuelToday * 10) / 10;
@@ -1615,8 +1834,8 @@ async function renderDashboard() {
       _iconClass: 'fuel',
       _title: (f.type === 'petroleo' ? 'Petróleo' : 'Bencina') + ' - ' + f.liters + ' lt',
       _sub: f.operator + ' &middot; ' + formatDate(f.date),
-      _value: '-' + f.liters + ' lt',
-      _valueClass: 'negative'
+      _value: ((f.movType || 'salida') === 'ingreso' ? '+' : '-') + f.liters + ' lt',
+      _valueClass: (f.movType || 'salida') === 'ingreso' ? 'positive' : 'negative'
     })),
     ...movements.map(m => ({
       ...m,
@@ -1673,40 +1892,136 @@ async function renderDashboard() {
 // ═══════════════════════════════════════════
 //  REPORTS
 // ═══════════════════════════════════════════
+let reportType = 'bodega';
+let reportPeriod = 'week';
+
+function setReportType(t, el) {
+  reportType = t;
+  document.querySelectorAll('#reportTypeTabs .toggle-tab').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  renderReports();
+}
+
+function setReportPeriod(p, el) {
+  reportPeriod = p;
+  document.querySelectorAll('#reportPeriodTabs .toggle-tab').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  renderReports();
+}
+
+function getReportDays(period) {
+  const days = [];
+  const now = new Date();
+  if (period === 'week') {
+    for (let i = 6; i >= 0; i--) {
+      days.push(new Date(now.getTime() - i * 86400000).toISOString().slice(0, 10));
+    }
+  } else {
+    const y = now.getUTCFullYear(), m = now.getUTCMonth(), todayNum = now.getUTCDate();
+    for (let d = 1; d <= todayNum; d++) {
+      days.push(new Date(Date.UTC(y, m, d)).toISOString().slice(0, 10));
+    }
+  }
+  return days;
+}
+
 async function renderReports() {
-  const fuels = await dbGetAll('fuel');
-  const movements = await dbGetAll('movements');
-  const products = await dbGetAll('products');
-  const monthStr = today().slice(0, 7);
+  const days = getReportDays(reportPeriod);
+  const daySet = new Set(days);
+  const dataByDay = {};
+  days.forEach(d => dataByDay[d] = { inQty: 0, outQty: 0, inCost: 0, outCost: 0 });
 
-  const fuelMonth = fuels.filter(f => f.date.startsWith(monthStr));
-  const petrol = fuelMonth.filter(f => f.type === 'petroleo').reduce((s, f) => s + f.liters, 0);
-  const benzin = fuelMonth.filter(f => f.type === 'bencina').reduce((s, f) => s + f.liters, 0);
+  if (reportType === 'bodega') {
+    const movs = await dbGetAll('movements');
+    movs.forEach(m => {
+      if (!daySet.has(m.date)) return;
+      const b = dataByDay[m.date];
+      if (m.type === 'ingreso') { b.inQty += m.quantity; b.inCost += (m.cost || 0); }
+      else { b.outQty += m.quantity; b.outCost += (m.cost || 0); }
+    });
+  } else {
+    const fuels = await dbGetAll('fuel');
+    fuels.forEach(f => {
+      if (!daySet.has(f.date)) return;
+      const mt = f.movType || 'salida';
+      const b = dataByDay[f.date];
+      if (mt === 'ingreso') { b.inQty += f.liters; b.inCost += (f.cost || 0); }
+      else { b.outQty += f.liters; b.outCost += (f.cost || 0); }
+    });
+  }
 
-  const movMonth = movements.filter(m => m.date.startsWith(monthStr));
-  const ingresos = movMonth.filter(m => m.type === 'ingreso').length;
-  const despachos = movMonth.filter(m => m.type === 'salida').length;
+  const totals = days.reduce((acc, d) => {
+    acc.inQty += dataByDay[d].inQty;
+    acc.outQty += dataByDay[d].outQty;
+    acc.inCost += dataByDay[d].inCost;
+    acc.outCost += dataByDay[d].outCost;
+    return acc;
+  }, { inQty: 0, outQty: 0, inCost: 0, outCost: 0 });
 
-  document.getElementById('monthSummary').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-      <div style="background:var(--amber-100);padding:12px;border-radius:10px;text-align:center">
-        <div style="font-size:20px;font-weight:700;color:var(--amber-600)">${Math.round(petrol * 10) / 10} lt</div>
-        <div style="font-size:11px;color:var(--gray-500)">Petróleo</div>
-      </div>
-      <div style="background:var(--amber-100);padding:12px;border-radius:10px;text-align:center">
-        <div style="font-size:20px;font-weight:700;color:var(--amber-600)">${Math.round(benzin * 10) / 10} lt</div>
-        <div style="font-size:11px;color:var(--gray-500)">Bencina</div>
-      </div>
+  const unitLabel = reportType === 'combustible' ? 'lt' : 'unid.';
+  const periodLabel = reportPeriod === 'week' ? 'de la semana' : 'del mes';
+
+  document.getElementById('reportSummary').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 8px">
       <div style="background:var(--green-100);padding:12px;border-radius:10px;text-align:center">
-        <div style="font-size:20px;font-weight:700;color:var(--green-700)">${ingresos}</div>
+        <div style="font-size:18px;font-weight:700;color:var(--green-700)">${round2(totals.inQty)} ${unitLabel}</div>
         <div style="font-size:11px;color:var(--gray-500)">Ingresos</div>
       </div>
       <div style="background:var(--red-100);padding:12px;border-radius:10px;text-align:center">
-        <div style="font-size:20px;font-weight:700;color:var(--red-600)">${despachos}</div>
+        <div style="font-size:18px;font-weight:700;color:var(--red-600)">${round2(totals.outQty)} ${unitLabel}</div>
         <div style="font-size:11px;color:var(--gray-500)">Salidas</div>
       </div>
+      <div style="background:var(--green-50);padding:12px;border-radius:10px;text-align:center">
+        <div style="font-size:15px;font-weight:700;color:var(--green-700)">${formatCLP(totals.inCost)}</div>
+        <div style="font-size:11px;color:var(--gray-500)">Costo ingresos</div>
+      </div>
+      <div style="background:var(--red-100);padding:12px;border-radius:10px;text-align:center">
+        <div style="font-size:15px;font-weight:700;color:var(--red-600)">${formatCLP(totals.outCost)}</div>
+        <div style="font-size:11px;color:var(--gray-500)">Costo salidas</div>
+      </div>
     </div>
-    <div style="font-size:12px;color:var(--gray-400);text-align:center">Resumen de ${monthStr}</div>
+    <div style="font-size:12px;color:var(--gray-400);text-align:center;margin-bottom:8px">Resumen ${periodLabel} &middot; ${reportType === 'combustible' ? 'Combustible' : 'Bodega'}</div>
+  `;
+
+  const maxOut = Math.max(1, ...days.map(d => dataByDay[d].outQty));
+  document.getElementById('reportChart').innerHTML = `
+    <div style="font-size:12px;color:var(--gray-500);margin:4px 0 8px">Salidas por día (${unitLabel})</div>
+    <div style="display:flex;align-items:flex-end;gap:4px;height:120px;padding:4px 0;overflow-x:auto">
+      ${days.map(d => {
+        const v = dataByDay[d].outQty;
+        const h = Math.max(2, Math.round((v / maxOut) * 100));
+        return `<div style="flex:1;min-width:16px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">
+          <div title="${formatDate(d)}: ${round2(v)} ${unitLabel}" style="width:100%;background:var(--red-600);border-radius:3px 3px 0 0;height:${h}%"></div>
+          <div style="font-size:9px;color:var(--gray-400);margin-top:4px">${d.slice(8, 10)}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+
+  const rows = days.slice().reverse().filter(d => dataByDay[d].inQty || dataByDay[d].outQty);
+  document.getElementById('reportTable').innerHTML = `
+    <div style="overflow-x:auto;margin-top:8px">
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead>
+        <tr style="border-bottom:1.5px solid var(--gray-200)">
+          <th style="text-align:left;padding:6px 4px;color:var(--gray-500)">Día</th>
+          <th style="text-align:right;padding:6px 4px;color:var(--gray-500)">Ingreso</th>
+          <th style="text-align:right;padding:6px 4px;color:var(--gray-500)">Salida</th>
+          <th style="text-align:right;padding:6px 4px;color:var(--gray-500)">Costo salida</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.length ? rows.map(d => `
+          <tr style="border-bottom:1px solid var(--gray-100)">
+            <td style="padding:6px 4px">${formatDate(d)}</td>
+            <td style="text-align:right;padding:6px 4px;color:var(--green-700)">${dataByDay[d].inQty ? '+' + round2(dataByDay[d].inQty) : '-'}</td>
+            <td style="text-align:right;padding:6px 4px;color:var(--red-600)">${dataByDay[d].outQty ? '-' + round2(dataByDay[d].outQty) : '-'}</td>
+            <td style="text-align:right;padding:6px 4px">${dataByDay[d].outCost ? formatCLP(dataByDay[d].outCost) : '-'}</td>
+          </tr>
+        `).join('') : '<tr><td colspan="4" style="padding:12px;text-align:center;color:var(--gray-400)">Sin movimientos en este período</td></tr>'}
+      </tbody>
+    </table>
+    </div>
   `;
 }
 
@@ -1717,24 +2032,25 @@ async function exportCSV(type) {
   if (type === 'fuel') {
     const items = await dbGetAll('fuel');
     items.sort((a, b) => b.date.localeCompare(a.date));
-    csv = 'Fecha,Tipo,Litros,Operario,Nota\n';
+    csv = 'Fecha,Tipo,Movimiento,Litros,Costo,Operario,Nota\n';
     csv += items.map(i =>
-      `${i.date},${i.type === 'petroleo' ? 'Petróleo' : 'Bencina'},${i.liters},"${i.operator}","${i.note || ''}"`
+      `${i.date},${i.type === 'petroleo' ? 'Petróleo' : 'Bencina'},${(i.movType || 'salida') === 'ingreso' ? 'Ingreso' : 'Salida'},${i.liters},${i.cost || 0},"${i.operator}","${i.note || ''}"`
     ).join('\n');
     filename = 'combustible_' + today() + '.csv';
   } else if (type === 'products') {
     const items = await dbGetAll('products');
-    csv = 'Nombre,I. Activo,Categoría,Unidad,Stock Actual,Stock Mínimo\n';
-    csv += items.map(i =>
-      `"${i.name}","${i.activo || ''}",${categoryLabel(i.category)},${i.unit},${i.stock},${i.minStock}`
-    ).join('\n');
+    csv = 'Nombre,I. Activo,Categoría,Unidad,Stock Actual,Stock Mínimo,Costo Promedio,Valor Total\n';
+    csv += items.map(i => {
+      const avg = i.stock > 0 ? (i.totalValue || 0) / i.stock : 0;
+      return `"${i.name}","${i.activo || ''}",${categoryLabel(i.category)},${i.unit},${i.stock},${i.minStock},${round2(avg)},${round2(i.totalValue || 0)}`;
+    }).join('\n');
     filename = 'inventario_' + today() + '.csv';
   } else {
     const items = await dbGetAll('movements');
     items.sort((a, b) => b.date.localeCompare(a.date));
-    csv = 'Fecha,Tipo,Producto,Cantidad,Unidad,Centro de Costo,Operario,Nota\n';
+    csv = 'Fecha,Tipo,Producto,Cantidad,Unidad,Costo,Centro de Costo,Operario,Nota\n';
     csv += items.map(i =>
-      `${i.date},${i.type === 'ingreso' ? 'Ingreso' : 'Salida'},"${i.productName}",${i.quantity},${i.productUnit},${i.costCenter || ''},"${i.operator}","${i.note || ''}"`
+      `${i.date},${i.type === 'ingreso' ? 'Ingreso' : 'Salida'},"${i.productName}",${i.quantity},${i.productUnit},${i.cost || 0},${i.costCenter || ''},"${i.operator}","${i.note || ''}"`
     ).join('\n');
     filename = 'movimientos_' + today() + '.csv';
   }
@@ -1754,13 +2070,14 @@ async function clearAllData() {
   if (!confirm('¿Estás seguro? Se eliminarán TODOS los datos.')) return;
   if (!confirm('Esta acción NO se puede deshacer. ¿Continuar?')) return;
 
-  const stores = ['fuel', 'products', 'movements'];
+  const stores = ['fuel', 'products', 'movements', 'fuelStock'];
   for (const store of stores) {
     const items = await dbGetAll(store);
     for (const item of items) {
-      await dbDelete(store, item.id);
+      await dbDelete(store, store === 'fuelStock' ? item.type : item.id);
     }
   }
+  await seedFuelStock();
   showToast('Todos los datos eliminados');
   refreshAll();
 }
@@ -1788,6 +2105,7 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 // ═══════════════════════════════════════════
 function refreshAll() {
   renderDashboard();
+  renderFuelStock();
   renderFuel();
   renderProducts();
   renderMovements();
@@ -1800,6 +2118,7 @@ function refreshAll() {
 async function init() {
   await openDB();
   await seedInitialProducts();
+  await seedFuelStock();
 
   const saved = localStorage.getItem('fundoUser');
   if (saved) {
