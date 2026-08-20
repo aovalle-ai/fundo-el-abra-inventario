@@ -709,6 +709,9 @@ body {
         <button class="filter-chip active" onclick="setFuelMovViewMode('list',this)">&#9776; Lista</button>
         <button class="filter-chip" onclick="setFuelMovViewMode('table',this)">&#9638; Tabla</button>
       </div>
+      <div class="form-group" style="margin-bottom:8px">
+        <input type="text" id="fuelListSearch" placeholder="Buscar por nota..." oninput="renderFuel()">
+      </div>
       <div class="toggle-tabs" id="fuelFilter">
         <button class="toggle-tab active" data-filter="all" onclick="setFuelFilter('all',this)">Todo</button>
         <button class="toggle-tab" data-filter="petroleo" onclick="setFuelFilter('petroleo',this)">Petróleo</button>
@@ -782,6 +785,20 @@ body {
       <div class="filter-bar" id="movViewToggle">
         <button class="filter-chip active" onclick="setMovViewMode('list',this)">&#9776; Lista</button>
         <button class="filter-chip" onclick="setMovViewMode('table',this)">&#9638; Tabla</button>
+      </div>
+      <div class="form-group" style="margin-bottom:8px">
+        <input type="text" id="movListSearch" placeholder="Buscar por producto, ingrediente activo o nota..." oninput="renderMovements()">
+      </div>
+      <div style="margin-bottom:8px">
+        <select id="movCostCenterFilter" onchange="renderMovements()" style="width:100%;padding:12px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:13px;background:white;color:var(--gray-800)">
+          <option value="">Todos los centros de costo</option>
+          <option value="CEREZAS">Cerezas</option>
+          <option value="CIRUELAS">Ciruelas</option>
+          <option value="MANZANAS">Manzanas</option>
+          <option value="NOGALES">Nogales</option>
+          <option value="NECTARINES">Nectarines</option>
+          <option value="OTRO">Otro</option>
+        </select>
       </div>
       <div class="filter-bar" id="movFilter">
         <button class="filter-chip active" onclick="setMovFilter('all',this)">Todo</button>
@@ -1640,9 +1657,18 @@ async function renderFuel() {
   if (fuelFilterType !== 'all') items = items.filter(i => i.type === fuelFilterType);
   if (fuelMovFilterType !== 'all') items = items.filter(i => (i.movType || 'salida') === fuelMovFilterType);
 
+  const q = (document.getElementById('fuelListSearch').value || '').trim().toLowerCase();
+  if (q) {
+    items = items.filter(i =>
+      (i.note && i.note.toLowerCase().includes(q)) ||
+      (i.type === 'petroleo' ? 'petróleo' : 'bencina').includes(q) ||
+      i.operator.toLowerCase().includes(q)
+    );
+  }
+
   const el = document.getElementById('fuelList');
   if (!items.length) {
-    el.innerHTML = '<div class="empty-state"><p>Sin registros de combustible</p></div>';
+    el.innerHTML = '<div class="empty-state"><p>Sin registros que coincidan</p></div>';
     return;
   }
 
@@ -2053,18 +2079,33 @@ function setMovFilter(type, el) {
 
 async function renderMovements() {
   let items = await dbGetAll('movements');
+  const products = await dbGetAll('products');
+  const byId = {};
+  products.forEach(p => byId[p.id] = p);
+
   if (movFilterType !== 'all') items = items.filter(i => i.type === movFilterType);
+
+  const ccFilter = document.getElementById('movCostCenterFilter').value;
+  if (ccFilter) items = items.filter(i => i.costCenter === ccFilter);
+
+  const q = (document.getElementById('movListSearch').value || '').trim().toLowerCase();
+  if (q) {
+    items = items.filter(i => {
+      const p = byId[i.productId];
+      return i.productName.toLowerCase().includes(q) ||
+        (i.note && i.note.toLowerCase().includes(q)) ||
+        (i.costCenter && i.costCenter.toLowerCase().includes(q)) ||
+        (p && p.activo && p.activo.toLowerCase().includes(q));
+    });
+  }
 
   const el = document.getElementById('movementList');
   if (!items.length) {
-    el.innerHTML = '<div class="empty-state"><p>Sin movimientos</p></div>';
+    el.innerHTML = '<div class="empty-state"><p>Sin movimientos que coincidan</p></div>';
     return;
   }
 
   if (movViewMode === 'table') {
-    const products = await dbGetAll('products');
-    const byId = {};
-    products.forEach(p => byId[p.id] = p);
     const rows = items.map(m => ({
       ...m,
       category: byId[m.productId] ? categoryLabel(byId[m.productId].category) : '',
