@@ -2750,6 +2750,10 @@ function refreshAll() {
 //  INIT
 // ═══════════════════════════════════════════
 async function init() {
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist().catch(() => {});
+  }
+
   await openDB();
   await seedInitialProducts();
   await seedFuelStock();
