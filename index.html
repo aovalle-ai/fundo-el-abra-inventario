@@ -692,6 +692,7 @@ body {
       <div class="filter-bar" id="fuelStockViewToggle">
         <button class="filter-chip active" onclick="setFuelStockViewMode('list',this)">&#9776; Lista</button>
         <button class="filter-chip" onclick="setFuelStockViewMode('table',this)">&#9638; Tabla</button>
+        <button class="filter-chip" onclick="exportFuelStockExcel()">&#8681; Excel</button>
       </div>
       <div id="fuelStockList"></div>
     </div>
@@ -708,6 +709,7 @@ body {
       <div class="filter-bar" id="fuelMovViewToggle">
         <button class="filter-chip active" onclick="setFuelMovViewMode('list',this)">&#9776; Lista</button>
         <button class="filter-chip" onclick="setFuelMovViewMode('table',this)">&#9638; Tabla</button>
+        <button class="filter-chip" onclick="exportFuelMovementsExcel()">&#8681; Excel</button>
       </div>
       <div class="form-group" style="margin-bottom:8px">
         <input type="text" id="fuelListSearch" placeholder="Buscar por nota..." oninput="renderFuel()">
@@ -767,6 +769,7 @@ body {
       <div class="filter-bar" id="prodViewToggle">
         <button class="filter-chip active" onclick="setProductViewMode('list',this)">&#9776; Lista</button>
         <button class="filter-chip" onclick="setProductViewMode('table',this)">&#9638; Tabla</button>
+        <button class="filter-chip" onclick="exportProductsExcel()">&#8681; Excel</button>
       </div>
       <div id="productList">
         <div class="empty-state"><p>Sin productos registrados</p></div>
@@ -785,6 +788,7 @@ body {
       <div class="filter-bar" id="movViewToggle">
         <button class="filter-chip active" onclick="setMovViewMode('list',this)">&#9776; Lista</button>
         <button class="filter-chip" onclick="setMovViewMode('table',this)">&#9638; Tabla</button>
+        <button class="filter-chip" onclick="exportMovementsExcel()">&#8681; Excel</button>
       </div>
       <div class="form-group" style="margin-bottom:8px">
         <input type="text" id="movListSearch" placeholder="Buscar por producto, ingrediente activo o nota..." oninput="renderMovements()">
@@ -836,15 +840,50 @@ body {
         Movimientos y costos
       </div>
       <div class="toggle-tabs" id="reportTypeTabs">
-        <button class="toggle-tab active" onclick="setReportType('bodega',this)">Bodega</button>
+        <button class="toggle-tab active" onclick="setReportType('bodega',this)">Productos</button>
         <button class="toggle-tab" onclick="setReportType('combustible',this)">Combustible</button>
+      </div>
+      <div class="toggle-tabs" id="reportFuelTypeTabs" style="display:none">
+        <button class="toggle-tab active" onclick="setReportFuelType('all',this)">Todos</button>
+        <button class="toggle-tab" onclick="setReportFuelType('petroleo',this)">Petróleo</button>
+        <button class="toggle-tab" onclick="setReportFuelType('bencina',this)">Bencina</button>
+      </div>
+      <div id="reportProductFilters">
+        <div class="form-group" style="margin-bottom:8px">
+          <input type="text" id="reportProductSearch" placeholder="Buscar producto o ingrediente activo..." oninput="renderReports()">
+        </div>
+        <div style="margin-bottom:8px">
+          <select id="reportCategoryFilter" onchange="renderReports()" style="width:100%;padding:12px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:13px;background:white;color:var(--gray-800)">
+            <option value="">Todos los tipos</option>
+            <option value="fertilizante">Fertilizante</option>
+            <option value="pesticida">Pesticida</option>
+            <option value="semilla">Semilla</option>
+            <option value="herramienta">Herramienta</option>
+            <option value="insumo">Insumo</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
       </div>
       <div class="toggle-tabs" id="reportPeriodTabs">
         <button class="toggle-tab active" onclick="setReportPeriod('week',this)">Semana</button>
         <button class="toggle-tab" onclick="setReportPeriod('month',this)">Mes</button>
+        <button class="toggle-tab" onclick="setReportPeriod('custom',this)">Personalizado</button>
       </div>
-      <div id="reportSummary"></div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <div class="form-group" style="flex:1;margin-bottom:0">
+          <label>Desde</label>
+          <input type="date" id="reportDateFrom" onchange="onReportDateChange()">
+        </div>
+        <div class="form-group" style="flex:1;margin-bottom:0">
+          <label>Hasta</label>
+          <input type="date" id="reportDateTo" onchange="onReportDateChange()">
+        </div>
+      </div>
+      <div id="reportKPIs"></div>
       <div id="reportChart"></div>
+      <div class="filter-bar" style="margin-top:10px">
+        <button class="filter-chip active" onclick="exportReportExcel()">&#8681; Descargar Excel</button>
+      </div>
       <div id="reportTable"></div>
     </div>
 
@@ -1150,6 +1189,31 @@ function sortArrow(state, col) {
 function toggleSort(state, col, defaultDir) {
   if (state.col === col) state.dir = state.dir === 'asc' ? 'desc' : 'asc';
   else { state.col = col; state.dir = defaultDir || 'asc'; }
+}
+
+function escapeXML(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function downloadExcel(filename, headers, rows) {
+  const cell = (v) => {
+    const type = typeof v === 'number' ? 'Number' : 'String';
+    return `<Cell><Data ss:Type="${type}">${escapeXML(v)}</Data></Cell>`;
+  };
+  const headerRow = '<Row>' + headers.map(h => cell(h)).join('') + '</Row>';
+  const dataRows = rows.map(r => '<Row>' + r.map(c => cell(c)).join('') + '</Row>').join('');
+  const xml = '<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n' +
+    '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' +
+    '<Worksheet ss:Name="Datos"><Table>' + headerRow + dataRows + '</Table></Worksheet></Workbook>';
+  const blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Archivo descargado: ' + filename);
 }
 
 function shortDate(d) {
@@ -1652,6 +1716,17 @@ async function renderFuelStock() {
     card(petro, labels.petroleo, icons.petroleo) + card(benc, labels.bencina, icons.bencina);
 }
 
+async function exportFuelStockExcel() {
+  const petro = (await dbGet('fuelStock', 'petroleo')) || { type: 'petroleo', stock: 0, totalValue: 0 };
+  const benc = (await dbGet('fuelStock', 'bencina')) || { type: 'bencina', stock: 0, totalValue: 0 };
+  const labels = { petroleo: 'Petróleo (Diésel)', bencina: 'Bencina' };
+  const rows = [petro, benc].map(f => ({ ...f, avgCost: f.stock > 0 ? f.totalValue / f.stock : 0 }));
+  const sorted = sortRows(rows, fuelStockTableSort.col, fuelStockTableSort.dir);
+  const headers = ['Combustible', 'Stock (lt)', 'Costo Promedio', 'Valor Total'];
+  const data = sorted.map(f => [labels[f.type], round2(f.stock), round2(f.avgCost), round2(f.totalValue)]);
+  downloadExcel('stock_combustible_' + today() + '.xls', headers, data);
+}
+
 async function renderFuel() {
   let items = await dbGetAll('fuel');
   if (fuelFilterType !== 'all') items = items.filter(i => i.type === fuelFilterType);
@@ -1725,6 +1800,25 @@ async function renderFuel() {
     </div>
   `;
   }).join('');
+}
+
+async function exportFuelMovementsExcel() {
+  let items = await dbGetAll('fuel');
+  if (fuelFilterType !== 'all') items = items.filter(i => i.type === fuelFilterType);
+  if (fuelMovFilterType !== 'all') items = items.filter(i => (i.movType || 'salida') === fuelMovFilterType);
+  const q = (document.getElementById('fuelListSearch').value || '').trim().toLowerCase();
+  if (q) {
+    items = items.filter(i =>
+      (i.note && i.note.toLowerCase().includes(q)) ||
+      (i.type === 'petroleo' ? 'petróleo' : 'bencina').includes(q) ||
+      i.operator.toLowerCase().includes(q)
+    );
+  }
+  const rows = items.map(i => ({ ...i, movType: i.movType || 'salida' }));
+  const sorted = sortRows(rows, fuelMovTableSort.col, fuelMovTableSort.dir);
+  const headers = ['Fecha', 'Combustible', 'Movimiento', 'Litros', 'Costo', 'Operario', 'Nota'];
+  const data = sorted.map(i => [formatDate(i.date), i.type === 'petroleo' ? 'Petróleo' : 'Bencina', i.movType === 'ingreso' ? 'Ingreso' : 'Salida', i.liters, i.cost || 0, i.operator, i.note || '']);
+  downloadExcel('movimientos_combustible_' + today() + '.xls', headers, data);
 }
 
 async function deleteFuel(id) {
@@ -1918,6 +2012,24 @@ async function renderProducts() {
       ${p.stock <= p.minStock ? '<div style="font-size:11px;color:var(--red-600);margin-top:6px;font-weight:600">&#9888; Stock bajo (mínimo: ' + p.minStock + ' ' + p.unit + ')</div>' : ''}
     </div>`;
   }).join('');
+}
+
+async function exportProductsExcel() {
+  const all = await dbGetAll('products');
+  const q = (document.getElementById('prodListSearch').value || '').trim().toLowerCase();
+  const catFilter = document.getElementById('prodListCategoryFilter').value;
+  let items = all.filter(p => {
+    if (catFilter && p.category !== catFilter) return false;
+    if (q && !(p.name.toLowerCase().includes(q) || (p.activo && p.activo.toLowerCase().includes(q)))) return false;
+    return true;
+  });
+  const rows = items.map(p => ({ ...p, avgCost: p.stock > 0 ? (p.totalValue || 0) / p.stock : 0 }));
+  const sorted = productViewMode === 'table'
+    ? sortRows(rows, prodTableSort.col, prodTableSort.dir)
+    : rows.slice().sort((a, b) => a.name.localeCompare(b.name));
+  const headers = ['Producto', 'Tipo', 'I.A.', 'Stock', 'Unidad', 'Costo Promedio', 'Valor Total'];
+  const data = sorted.map(p => [p.name, categoryLabel(p.category), p.activo || '', p.stock, p.unit, round2(p.avgCost), round2(p.totalValue || 0)]);
+  downloadExcel('inventario_' + today() + '.xls', headers, data);
 }
 
 // ═══════════════════════════════════════════
@@ -2167,6 +2279,40 @@ async function renderMovements() {
   `).join('');
 }
 
+async function exportMovementsExcel() {
+  let items = await dbGetAll('movements');
+  const products = await dbGetAll('products');
+  const byId = {};
+  products.forEach(p => byId[p.id] = p);
+
+  if (movFilterType !== 'all') items = items.filter(i => i.type === movFilterType);
+  const ccFilter = document.getElementById('movCostCenterFilter').value;
+  if (ccFilter) items = items.filter(i => i.costCenter === ccFilter);
+  const q = (document.getElementById('movListSearch').value || '').trim().toLowerCase();
+  if (q) {
+    items = items.filter(i => {
+      const p = byId[i.productId];
+      return i.productName.toLowerCase().includes(q) ||
+        (i.note && i.note.toLowerCase().includes(q)) ||
+        (i.costCenter && i.costCenter.toLowerCase().includes(q)) ||
+        (p && p.activo && p.activo.toLowerCase().includes(q));
+    });
+  }
+
+  const rows = items.map(m => ({
+    ...m,
+    category: byId[m.productId] ? categoryLabel(byId[m.productId].category) : '',
+    activo: byId[m.productId] ? (byId[m.productId].activo || '') : ''
+  }));
+  const sorted = movViewMode === 'table'
+    ? sortRows(rows, movTableSort.col, movTableSort.dir)
+    : rows.slice().sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
+
+  const headers = ['Fecha', 'Producto', 'Tipo', 'I.A.', 'Movimiento', 'Cantidad', 'Unidad', 'Costo', 'Centro de Costo', 'Operario', 'Nota'];
+  const data = sorted.map(m => [formatDate(m.date), m.productName, m.category, m.activo, m.type === 'ingreso' ? 'Ingreso' : 'Salida', m.quantity, m.productUnit, m.cost || 0, m.costCenter || '', m.operator, m.note || '']);
+  downloadExcel('movimientos_bodega_' + today() + '.xls', headers, data);
+}
+
 async function deleteMovement(id) {
   if (!confirm('¿Eliminar este movimiento? El stock del producto se ajustará.')) return;
   const mov = await dbGet('movements', id);
@@ -2277,75 +2423,129 @@ async function renderDashboard() {
 //  REPORTS
 // ═══════════════════════════════════════════
 let reportType = 'bodega';
+let reportFuelType = 'all';
 let reportPeriod = 'week';
+let reportTableSort = { col: 'date', dir: 'desc' };
+let reportDetailRows = [];
+let reportShowCatCols = true;
 
 function setReportType(t, el) {
   reportType = t;
   document.querySelectorAll('#reportTypeTabs .toggle-tab').forEach(x => x.classList.remove('active'));
   el.classList.add('active');
+  document.getElementById('reportFuelTypeTabs').style.display = t === 'combustible' ? 'flex' : 'none';
+  document.getElementById('reportProductFilters').style.display = t === 'bodega' ? 'block' : 'none';
   renderReports();
 }
 
-function setReportPeriod(p, el) {
-  reportPeriod = p;
-  document.querySelectorAll('#reportPeriodTabs .toggle-tab').forEach(x => x.classList.remove('active'));
+function setReportFuelType(t, el) {
+  reportFuelType = t;
+  document.querySelectorAll('#reportFuelTypeTabs .toggle-tab').forEach(x => x.classList.remove('active'));
   el.classList.add('active');
   renderReports();
 }
 
-function getReportDays(period) {
-  const days = [];
-  const now = new Date();
+function applyReportPeriodPreset(period) {
   if (period === 'week') {
-    for (let i = 6; i >= 0; i--) {
-      days.push(new Date(now.getTime() - i * 86400000).toISOString().slice(0, 10));
-    }
-  } else {
-    const y = now.getUTCFullYear(), m = now.getUTCMonth(), todayNum = now.getUTCDate();
-    for (let d = 1; d <= todayNum; d++) {
-      days.push(new Date(Date.UTC(y, m, d)).toISOString().slice(0, 10));
-    }
+    document.getElementById('reportDateFrom').value = dateOffset(6);
+    document.getElementById('reportDateTo').value = dateOffset(0);
+  } else if (period === 'month') {
+    const now = new Date();
+    document.getElementById('reportDateFrom').value = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().slice(0, 10);
+    document.getElementById('reportDateTo').value = dateOffset(0);
   }
-  return days;
 }
 
-async function renderReports() {
-  const days = getReportDays(reportPeriod);
-  const daySet = new Set(days);
-  const dataByDay = {};
-  days.forEach(d => dataByDay[d] = { inQty: 0, outQty: 0, inCost: 0, outCost: 0 });
+function setReportPeriod(period, el) {
+  reportPeriod = period;
+  document.querySelectorAll('#reportPeriodTabs .toggle-tab').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  if (period !== 'custom') applyReportPeriodPreset(period);
+  renderReports();
+}
+
+function onReportDateChange() {
+  reportPeriod = 'custom';
+  document.querySelectorAll('#reportPeriodTabs .toggle-tab').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('#reportPeriodTabs .toggle-tab')[2].classList.add('active');
+  renderReports();
+}
+
+function setReportTableSort(col) {
+  toggleSort(reportTableSort, col, 'desc');
+  renderReports();
+}
+
+async function getReportDetailRows() {
+  const from = document.getElementById('reportDateFrom').value || dateOffset(6);
+  const to = document.getElementById('reportDateTo').value || dateOffset(0);
 
   if (reportType === 'bodega') {
     const movs = await dbGetAll('movements');
-    movs.forEach(m => {
-      if (!daySet.has(m.date)) return;
-      const b = dataByDay[m.date];
-      if (m.type === 'ingreso') { b.inQty += m.quantity; b.inCost += (m.cost || 0); }
-      else { b.outQty += m.quantity; b.outCost += (m.cost || 0); }
-    });
-  } else {
-    const fuels = await dbGetAll('fuel');
-    fuels.forEach(f => {
-      if (!daySet.has(f.date)) return;
-      const mt = f.movType || 'salida';
-      const b = dataByDay[f.date];
-      if (mt === 'ingreso') { b.inQty += f.liters; b.inCost += (f.cost || 0); }
-      else { b.outQty += f.liters; b.outCost += (f.cost || 0); }
-    });
+    const products = await dbGetAll('products');
+    const byId = {};
+    products.forEach(p => byId[p.id] = p);
+
+    const q = (document.getElementById('reportProductSearch').value || '').trim().toLowerCase();
+    const catFilter = document.getElementById('reportCategoryFilter').value;
+
+    return movs
+      .filter(m => m.date >= from && m.date <= to)
+      .filter(m => {
+        const p = byId[m.productId];
+        if (catFilter && (!p || p.category !== catFilter)) return false;
+        if (q && !(m.productName.toLowerCase().includes(q) || (p && p.activo && p.activo.toLowerCase().includes(q)))) return false;
+        return true;
+      })
+      .map(m => ({
+        date: m.date,
+        name: m.productName,
+        category: byId[m.productId] ? categoryLabel(byId[m.productId].category) : '',
+        activo: byId[m.productId] ? (byId[m.productId].activo || '') : '',
+        movType: m.type,
+        quantity: m.quantity,
+        unit: m.productUnit,
+        cost: m.cost || 0,
+        costCenter: m.costCenter || '',
+        note: m.note || '',
+        operator: m.operator
+      }));
   }
 
-  const totals = days.reduce((acc, d) => {
-    acc.inQty += dataByDay[d].inQty;
-    acc.outQty += dataByDay[d].outQty;
-    acc.inCost += dataByDay[d].inCost;
-    acc.outCost += dataByDay[d].outCost;
+  const fuels = await dbGetAll('fuel');
+  return fuels
+    .filter(f => f.date >= from && f.date <= to)
+    .filter(f => reportFuelType === 'all' || f.type === reportFuelType)
+    .map(f => ({
+      date: f.date,
+      name: f.type === 'petroleo' ? 'Petróleo' : 'Bencina',
+      category: '',
+      activo: '',
+      movType: f.movType || 'salida',
+      quantity: f.liters,
+      unit: 'lt',
+      cost: f.cost || 0,
+      costCenter: '',
+      note: f.note || '',
+      operator: f.operator
+    }));
+}
+
+async function renderReports() {
+  const from = document.getElementById('reportDateFrom').value || dateOffset(6);
+  const to = document.getElementById('reportDateTo').value || dateOffset(0);
+  const detailRows = await getReportDetailRows();
+  reportShowCatCols = reportType === 'bodega';
+
+  const totals = detailRows.reduce((acc, r) => {
+    if (r.movType === 'ingreso') { acc.inQty += r.quantity; acc.inCost += r.cost; }
+    else { acc.outQty += r.quantity; acc.outCost += r.cost; }
     return acc;
   }, { inQty: 0, outQty: 0, inCost: 0, outCost: 0 });
 
   const unitLabel = reportType === 'combustible' ? 'lt' : 'unid.';
-  const periodLabel = reportPeriod === 'week' ? 'de la semana' : 'del mes';
 
-  document.getElementById('reportSummary').innerHTML = `
+  document.getElementById('reportKPIs').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 8px">
       <div style="background:var(--green-100);padding:12px;border-radius:10px;text-align:center">
         <div style="font-size:18px;font-weight:700;color:var(--green-700)">${round2(totals.inQty)} ${unitLabel}</div>
@@ -2364,49 +2564,99 @@ async function renderReports() {
         <div style="font-size:11px;color:var(--gray-500)">Costo salidas</div>
       </div>
     </div>
-    <div style="font-size:12px;color:var(--gray-400);text-align:center;margin-bottom:8px">Resumen ${periodLabel} &middot; ${reportType === 'combustible' ? 'Combustible' : 'Bodega'}</div>
+    <div style="font-size:12px;color:var(--gray-400);text-align:center;margin-bottom:8px">${formatDate(from)} &mdash; ${formatDate(to)} &middot; ${detailRows.length} movimiento${detailRows.length === 1 ? '' : 's'}</div>
   `;
 
-  const maxOut = Math.max(1, ...days.map(d => dataByDay[d].outQty));
+  const days = [];
+  {
+    let d = new Date(from + 'T00:00:00Z');
+    const end = new Date(to + 'T00:00:00Z');
+    let guard = 0;
+    while (d.getTime() <= end.getTime() && guard < 366) {
+      days.push(d.toISOString().slice(0, 10));
+      d = new Date(d.getTime() + 86400000);
+      guard++;
+    }
+  }
+  const byDay = {};
+  days.forEach(d => byDay[d] = { inQty: 0, outQty: 0 });
+  detailRows.forEach(r => {
+    if (!byDay[r.date]) return;
+    if (r.movType === 'ingreso') byDay[r.date].inQty += r.quantity;
+    else byDay[r.date].outQty += r.quantity;
+  });
+  const maxVal = Math.max(1, ...days.map(d => Math.max(byDay[d].inQty, byDay[d].outQty)));
+
   document.getElementById('reportChart').innerHTML = `
-    <div style="font-size:12px;color:var(--gray-500);margin:4px 0 8px">Salidas por día (${unitLabel})</div>
-    <div style="display:flex;align-items:flex-end;gap:4px;height:120px;padding:4px 0;overflow-x:auto">
+    <div style="font-size:12px;color:var(--gray-500);margin:4px 0 8px">Ingresos vs Salidas por día (${unitLabel})</div>
+    <div style="display:flex;align-items:flex-end;gap:6px;height:130px;padding:4px 0;overflow-x:auto">
       ${days.map(d => {
-        const v = dataByDay[d].outQty;
-        const h = Math.max(2, Math.round((v / maxOut) * 100));
-        return `<div style="flex:1;min-width:16px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">
-          <div title="${formatDate(d)}: ${round2(v)} ${unitLabel}" style="width:100%;background:var(--red-600);border-radius:3px 3px 0 0;height:${h}%"></div>
+        const inH = byDay[d].inQty > 0 ? Math.max(3, Math.round((byDay[d].inQty / maxVal) * 100)) : 0;
+        const outH = byDay[d].outQty > 0 ? Math.max(3, Math.round((byDay[d].outQty / maxVal) * 100)) : 0;
+        return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:26px">
+          <div style="display:flex;gap:2px;align-items:flex-end;height:100%">
+            <div title="Ingreso: ${round2(byDay[d].inQty)}" style="width:8px;background:var(--green-600);border-radius:2px 2px 0 0;height:${inH}%"></div>
+            <div title="Salida: ${round2(byDay[d].outQty)}" style="width:8px;background:var(--red-600);border-radius:2px 2px 0 0;height:${outH}%"></div>
+          </div>
           <div style="font-size:9px;color:var(--gray-400);margin-top:4px">${d.slice(8, 10)}</div>
         </div>`;
       }).join('')}
     </div>
+    <div style="display:flex;gap:14px;font-size:11px;color:var(--gray-500);margin-top:4px">
+      <span><span style="display:inline-block;width:8px;height:8px;background:var(--green-600);border-radius:2px;margin-right:4px"></span>Ingreso</span>
+      <span><span style="display:inline-block;width:8px;height:8px;background:var(--red-600);border-radius:2px;margin-right:4px"></span>Salida</span>
+    </div>
   `;
 
-  const rows = days.slice().reverse().filter(d => dataByDay[d].inQty || dataByDay[d].outQty);
-  document.getElementById('reportTable').innerHTML = `
+  reportDetailRows = sortRows(detailRows, reportTableSort.col, reportTableSort.dir);
+  const el = document.getElementById('reportTable');
+  if (!reportDetailRows.length) {
+    el.innerHTML = '<div class="empty-state"><p>Sin movimientos en este período</p></div>';
+    return;
+  }
+
+  el.innerHTML = `
     <div style="overflow-x:auto;margin-top:8px">
     <table style="width:100%;border-collapse:collapse;font-size:12px">
       <thead>
         <tr style="border-bottom:1.5px solid var(--gray-200)">
-          <th style="text-align:left;padding:6px 4px;color:var(--gray-500)">Día</th>
-          <th style="text-align:right;padding:6px 4px;color:var(--gray-500)">Ingreso</th>
-          <th style="text-align:right;padding:6px 4px;color:var(--gray-500)">Salida</th>
-          <th style="text-align:right;padding:6px 4px;color:var(--gray-500)">Costo salida</th>
+          <th style="text-align:left;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setReportTableSort('date')">Fecha${sortArrow(reportTableSort, 'date')}</th>
+          <th style="text-align:left;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setReportTableSort('name')">${reportType === 'combustible' ? 'Combustible' : 'Producto'}${sortArrow(reportTableSort, 'name')}</th>
+          ${reportShowCatCols ? `<th style="text-align:left;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setReportTableSort('category')">Tipo${sortArrow(reportTableSort, 'category')}</th>
+          <th style="text-align:left;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setReportTableSort('activo')">I.A.${sortArrow(reportTableSort, 'activo')}</th>` : ''}
+          <th style="text-align:left;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setReportTableSort('movType')">Movimiento${sortArrow(reportTableSort, 'movType')}</th>
+          <th style="text-align:right;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setReportTableSort('quantity')">Cantidad${sortArrow(reportTableSort, 'quantity')}</th>
+          <th style="text-align:right;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setReportTableSort('cost')">Costo${sortArrow(reportTableSort, 'cost')}</th>
+          ${reportShowCatCols ? `<th style="text-align:left;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setReportTableSort('costCenter')">Centro Costo${sortArrow(reportTableSort, 'costCenter')}</th>` : ''}
         </tr>
       </thead>
       <tbody>
-        ${rows.length ? rows.map(d => `
+        ${reportDetailRows.map(r => `
           <tr style="border-bottom:1px solid var(--gray-100)">
-            <td style="padding:6px 4px">${formatDate(d)}</td>
-            <td style="text-align:right;padding:6px 4px;color:var(--green-700)">${dataByDay[d].inQty ? '+' + round2(dataByDay[d].inQty) : '-'}</td>
-            <td style="text-align:right;padding:6px 4px;color:var(--red-600)">${dataByDay[d].outQty ? '-' + round2(dataByDay[d].outQty) : '-'}</td>
-            <td style="text-align:right;padding:6px 4px">${dataByDay[d].outCost ? formatCLP(dataByDay[d].outCost) : '-'}</td>
+            <td style="padding:8px 6px">${formatDate(r.date)}</td>
+            <td style="padding:8px 6px;font-weight:600">${r.name}</td>
+            ${reportShowCatCols ? `<td style="padding:8px 6px">${r.category || '-'}</td><td style="padding:8px 6px;color:var(--gray-500)">${r.activo || '-'}</td>` : ''}
+            <td style="padding:8px 6px;color:${r.movType === 'ingreso' ? 'var(--green-700)' : 'var(--red-600)'}">${r.movType === 'ingreso' ? 'Ingreso' : 'Salida'}</td>
+            <td style="text-align:right;padding:8px 6px">${r.movType === 'ingreso' ? '+' : '-'}${r.quantity} ${r.unit}</td>
+            <td style="text-align:right;padding:8px 6px">${r.cost ? formatCLP(r.cost) : '-'}</td>
+            ${reportShowCatCols ? `<td style="padding:8px 6px">${r.costCenter || '-'}</td>` : ''}
           </tr>
-        `).join('') : '<tr><td colspan="4" style="padding:12px;text-align:center;color:var(--gray-400)">Sin movimientos en este período</td></tr>'}
+        `).join('')}
       </tbody>
     </table>
     </div>
   `;
+}
+
+function exportReportExcel() {
+  const headers = reportShowCatCols
+    ? ['Fecha', reportType === 'combustible' ? 'Combustible' : 'Producto', 'Tipo', 'I.A.', 'Movimiento', 'Cantidad', 'Unidad', 'Costo', 'Centro de Costo']
+    : ['Fecha', 'Combustible', 'Movimiento', 'Cantidad', 'Unidad', 'Costo'];
+  const data = reportDetailRows.map(r => reportShowCatCols
+    ? [formatDate(r.date), r.name, r.category, r.activo, r.movType === 'ingreso' ? 'Ingreso' : 'Salida', r.quantity, r.unit, r.cost, r.costCenter]
+    : [formatDate(r.date), r.name, r.movType === 'ingreso' ? 'Ingreso' : 'Salida', r.quantity, r.unit, r.cost]
+  );
+  downloadExcel('reporte_' + today() + '.xls', headers, data);
 }
 
 async function exportCSV(type) {
@@ -2504,6 +2754,7 @@ async function init() {
   await seedInitialProducts();
   await seedFuelStock();
   await seedDemoData();
+  applyReportPeriodPreset('week');
 
   const saved = localStorage.getItem('fundoUser');
   if (saved) {
