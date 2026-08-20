@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#2d6a4f">
+<link rel="manifest" href="manifest.json">
+<title>Fundo El Abra - Control de Inventario</title>
+<style>
+:root {
+  --green-900: #1b4332;
+  --green-800: #2d6a4f;
+  --green-700: #40916c;
+  --green-600: #52b788;
+  --green-500: #74c69d;
+  --green-100: #d8f3dc;
+  --green-50: #f0faf2;
+  --amber-600: #d97706;
+  --amber-100: #fef3c7;
+  --red-600: #dc2626;
+  --red-100: #fee2e2;
+  --blue-600: #2563eb;
+  --blue-100: #dbeafe;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+  --radius: 12px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--gray-50);
+  color: var(--gray-800);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── Header ── */
+.app-header {
+  background: linear-gradient(135deg, var(--green-900), var(--green-800));
+  color: white;
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-md);
+}
+.app-header h1 {
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.app-header .subtitle {
+  font-size: 12px;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.user-badge {
+  background: rgba(255,255,255,0.15);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* ── Bottom Nav ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  display: flex;
+  border-top: 1px solid var(--gray-200);
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px 10px;
+  font-size: 10px;
+  color: var(--gray-400);
+  cursor: pointer;
+  transition: color 0.2s;
+  border: none;
+  background: none;
+  gap: 4px;
+}
+.nav-item.active { color: var(--green-800); }
+.nav-item svg { width: 22px; height: 22px; }
+
+/* ── Pages ── */
+.page {
+  display: none;
+  padding: 16px;
+  padding-bottom: 80px;
+  animation: fadeIn 0.2s ease;
+}
+.page.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Cards ── */
+.card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Stats Grid ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.stat-card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+.stat-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--green-800);
+}
+.stat-label {
+  font-size: 11px;
+  color: var(--gray-500);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.stat-card.fuel { border-left: 3px solid var(--amber-600); }
+.stat-card.fuel .stat-value { color: var(--amber-600); }
+.stat-card.stock { border-left: 3px solid var(--green-700); }
+.stat-card.inventory { border-left: 3px solid var(--blue-600); }
+.stat-card.inventory .stat-value { color: var(--blue-600); }
+.stat-card.alert { border-left: 3px solid var(--red-600); }
+.stat-card.alert .stat-value { color: var(--red-600); }
+
+/* ── Forms ── */
+.form-group {
+  margin-bottom: 14px;
+}
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-600);
+  margin-bottom: 6px;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 10px;
+  font-size: 16px;
+  background: white;
+  color: var(--gray-800);
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--green-600);
+  box-shadow: 0 0 0 3px rgba(82,183,136,0.15);
+}
+.form-group textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+.btn-primary {
+  background: var(--green-800);
+  color: white;
+}
+.btn-primary:active { background: var(--green-900); transform: scale(0.98); }
+.btn-secondary {
+  background: var(--gray-100);
+  color: var(--gray-700);
+}
+.btn-danger {
+  background: var(--red-100);
+  color: var(--red-600);
+}
+.btn-amber {
+  background: linear-gradient(135deg, var(--amber-600), #b45309);
+  color: white;
+}
+.btn-amber:active { transform: scale(0.98); }
+.btn-blue {
+  background: var(--blue-600);
+  color: white;
+}
+.btn-blue:active { transform: scale(0.98); }
+.btn-sm {
+  padding: 8px 14px;
+  font-size: 13px;
+  width: auto;
+}
+.btn-row {
+  display: flex;
+  gap: 8px;
+}
+.btn-row .btn { flex: 1; }
+
+/* ── Toggle tabs ── */
+.toggle-tabs {
+  display: flex;
+  background: var(--gray-100);
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 14px;
+}
+.toggle-tab {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--gray-500);
+  border: none;
+  background: none;
+  transition: all 0.2s;
+}
+.toggle-tab.active {
+  background: white;
+  color: var(--green-800);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── List items ── */
+.list-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--gray-100);
+  gap: 12px;
+}
+.list-item:last-child { border-bottom: none; }
+.list-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.list-icon.fuel { background: var(--amber-100); }
+.list-icon.ingreso { background: var(--green-100); }
+.list-icon.despacho { background: var(--red-100); }
+.list-icon.product { background: var(--blue-100); }
+.list-content { flex: 1; min-width: 0; }
+.list-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+.list-sub {
+  font-size: 12px;
+  color: var(--gray-500);
+  margin-top: 1px;
+}
+.list-value {
+  font-size: 14px;
+  font-weight: 700;
+  text-align: right;
+  flex-shrink: 0;
+}
+.list-value.negative { color: var(--red-600); }
+.list-value.positive { color: var(--green-700); }
+
+/* ── Modal ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 200;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.active {
+  display: flex;
+  animation: fadeOverlay 0.2s ease;
+}
+@keyframes fadeOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.modal-content {
+  background: white;
+  border-radius: 20px 20px 0 0;
+  padding: 20px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.modal-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--gray-100);
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-600);
+}
+
+/* ── Toast ── */
+.toast {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: var(--gray-800);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 300;
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── Stock bar ── */
+.stock-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--gray-200);
+  border-radius: 3px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.stock-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--gray-400);
+}
+.empty-state svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+.empty-state p {
+  font-size: 14px;
+}
+
+/* ── Fab ── */
+.fab {
+  position: fixed;
+  bottom: 76px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--green-800);
+  color: white;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(45,106,79,0.4);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+.fab:active { transform: scale(0.92); }
+.fab.hidden { display: none; }
+
+/* ── Login ── */
+.login-screen {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--green-900) 0%, var(--green-700) 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: white;
+}
+.login-logo {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+.login-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.login-subtitle {
+  font-size: 14px;
+  opacity: 0.8;
+  margin-bottom: 32px;
+}
+.login-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 360px;
+  color: var(--gray-800);
+}
+.login-card h3 {
+  font-size: 16px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.login-card .form-group { margin-bottom: 16px; }
+
+/* ── Section header ── */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gray-800);
+}
+
+/* ── Responsive desktop ── */
+@media (min-width: 600px) {
+  .page { max-width: 500px; margin: 0 auto; }
+  .modal-content { border-radius: 20px; margin: auto; }
+  .modal-overlay { align-items: center; }
+}
+
+/* ── Filter bar ── */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.filter-chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1.5px solid var(--gray-200);
+  background: white;
+  color: var(--gray-600);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.filter-chip.active {
+  border-color: var(--green-700);
+  background: var(--green-100);
+  color: var(--green-800);
+}
+
+/* Delete button in list */
+.list-delete {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: none;
+  border: none;
+  color: var(--gray-400);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.list-delete:active { background: var(--red-100); color: var(--red-600); }
+</style>
+</head>
+<body>
+
+<!-- ════════ LOGIN SCREEN ════════ -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-logo">&#127806;</div>
+  <div class="login-title">Fundo El Abra</div>
+  <div class="login-subtitle">Control de Inventario y Combustible</div>
+  <div class="login-card">
+    <h3>Ingresa tu nombre</h3>
+    <div class="form-group">
+      <input type="text" id="loginName" placeholder="Ej: Juan Pérez" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>Rol</label>
+      <select id="loginRole">
+        <option value="operario">Operario</option>
+        <option value="bodeguero">Bodeguero</option>
+        <option value="admin">Administrador</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- ════════ MAIN APP ════════ -->
+<div id="mainApp" style="display:none">
+
+  <!-- Header -->
+  <div class="app-header">
+    <div class="header-row">
+      <div>
+        <h1>&#127806; Fundo El Abra</h1>
+        <div class="subtitle">Control de Inventario</div>
+      </div>
+      <div class="user-badge" onclick="logout()" id="userBadge">Usuario</div>
+    </div>
+  </div>
+
+  <!-- ── PAGE: Inicio ── -->
+  <div class="page active" id="page-inicio">
+    <div class="stats-grid">
+      <div class="stat-card fuel">
+        <div class="stat-value" id="statFuelToday">0</div>
+        <div class="stat-label">Litros hoy</div>
+      </div>
+      <div class="stat-card fuel">
+        <div class="stat-value" id="statFuelMonth">0</div>
+        <div class="stat-label">Litros mes</div>
+      </div>
+      <div class="stat-card stock">
+        <div class="stat-value" id="statProducts">0</div>
+        <div class="stat-label">Productos</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-value" id="statAlerts">0</div>
+        <div class="stat-label">Stock bajo</div>
+      </div>
+    </div>
+
+    <!-- Recent activity -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        Actividad reciente
+      </div>
+      <div id="recentActivity">
+        <div class="empty-state"><p>Sin actividad todavía</p></div>
+      </div>
+    </div>
+
+    <!-- Low stock alerts -->
+    <div class="card" id="alertsCard" style="display:none">
+      <div class="card-title" style="color:var(--red-600)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Stock Bajo
+      </div>
+      <div id="alertsList"></div>
+    </div>
+  </div>
+
+  <!-- ── PAGE: Combustible ── -->
+  <div class="page" id="page-combustible">
+    <div class="section-header">
+      <div class="section-title">Combustible</div>
+      <button class="btn btn-sm btn-amber" onclick="openFuelModal()">+ Registrar</button>
+    </div>
+
+    <div class="toggle-tabs" id="fuelFilter">
+      <button class="toggle-tab active" data-filter="all" onclick="setFuelFilter('all',this)">Todo</button>
+      <button class="toggle-tab" data-filter="petroleo" onclick="setFuelFilter('petroleo',this)">Petróleo</button>
+      <button class="toggle-tab" data-filter="bencina" onclick="setFuelFilter('bencina',this)">Bencina</button>
+    </div>
+
+    <div class="card">
+      <div id="fuelList">
+        <div class="empty-state"><p>Sin registros de combustible</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAGE: Bodega ── -->
+  <div class="page" id="page-bodega">
+    <div class="toggle-tabs" id="bodegaTabs">
+      <button class="toggle-tab active" onclick="setBodegaTab('inventario',this)">Inventario</button>
+      <button class="toggle-tab" onclick="setBodegaTab('movimientos',this)">Movimientos</button>
+    </div>
+
+    <!-- Inventario sub-view -->
+    <div id="bodega-inventario">
+      <div class="section-header">
+        <div class="section-title">Productos</div>
+        <button class="btn btn-sm btn-primary" onclick="openProductModal()">+ Producto</button>
+      </div>
+      <div id="productList">
+        <div class="empty-state"><p>Sin productos registrados</p></div>
+      </div>
+    </div>
+
+    <!-- Movimientos sub-view -->
+    <div id="bodega-movimientos" style="display:none">
+      <div class="section-header">
+        <div class="section-title">Movimientos de Stock</div>
+        <div class="btn-row">
+          <button class="btn btn-sm btn-primary" onclick="openMovementModal('ingreso')">+ Ingreso</button>
+          <button class="btn btn-sm btn-danger" onclick="openMovementModal('despacho')">- Despacho</button>
+        </div>
+      </div>
+      <div class="filter-bar" id="movFilter">
+        <button class="filter-chip active" onclick="setMovFilter('all',this)">Todo</button>
+        <button class="filter-chip" onclick="setMovFilter('ingreso',this)">Ingresos</button>
+        <button class="filter-chip" onclick="setMovFilter('despacho',this)">Despachos</button>
+      </div>
+      <div class="card">
+        <div id="movementList">
+          <div class="empty-state"><p>Sin movimientos</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAGE: Reportes ── -->
+  <div class="page" id="page-reportes">
+    <div class="section-title" style="margin-bottom:14px">Reportes y Exportación</div>
+
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exportar datos
+      </div>
+      <p style="font-size:13px;color:var(--gray-500);margin-bottom:14px">Descarga todos los datos en formato CSV para revisarlos en Excel.</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-amber" onclick="exportCSV('fuel')">Exportar Combustible</button>
+        <button class="btn btn-primary" onclick="exportCSV('products')">Exportar Inventario</button>
+        <button class="btn btn-blue" onclick="exportCSV('movements')">Exportar Movimientos</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Resumen del mes
+      </div>
+      <div id="monthSummary"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="color:var(--red-600)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+        Borrar todos los datos
+      </div>
+      <p style="font-size:13px;color:var(--gray-500);margin-bottom:14px">Elimina permanentemente todos los registros. Esta acción no se puede deshacer.</p>
+      <button class="btn btn-danger" onclick="clearAllData()">Borrar todo</button>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="showPage('inicio',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Inicio</span>
+    </button>
+    <button class="nav-item" onclick="showPage('combustible',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="M9 15h6"/></svg>
+      <span>Combustible</span>
+    </button>
+    <button class="nav-item" onclick="showPage('bodega',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      <span>Bodega</span>
+    </button>
+    <button class="nav-item" onclick="showPage('reportes',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>Reportes</span>
+    </button>
+  </nav>
+
+  <!-- FAB -->
+  <button class="fab" id="fab" onclick="onFabClick()">+</button>
+</div>
+
+<!-- ════════ MODALS ════════ -->
+
+<!-- Fuel Modal -->
+<div class="modal-overlay" id="fuelModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Registrar Combustible</h2>
+      <button class="modal-close" onclick="closeModal('fuelModal')">&times;</button>
+    </div>
+    <div class="form-group">
+      <label>Fecha</label>
+      <input type="date" id="fuelDate">
+    </div>
+    <div class="form-group">
+      <label>Tipo</label>
+      <select id="fuelType">
+        <option value="petroleo">Petróleo (Diésel)</option>
+        <option value="bencina">Bencina</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Litros</label>
+      <input type="number" id="fuelLiters" placeholder="Ej: 50" min="0" step="0.1" inputmode="decimal">
+    </div>
+    <div class="form-group">
+      <label>Nota (opcional)</label>
+      <textarea id="fuelNote" placeholder="Ej: Tractor John Deere, potrero norte"></textarea>
+    </div>
+    <button class="btn btn-amber" onclick="saveFuel()">Guardar registro</button>
+  </div>
+</div>
+
+<!-- Product Modal -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="productModalTitle">Nuevo Producto</h2>
+      <button class="modal-close" onclick="closeModal('productModal')">&times;</button>
+    </div>
+    <div class="form-group">
+      <label>Nombre del producto</label>
+      <input type="text" id="prodName" placeholder="Ej: Fertilizante NPK">
+    </div>
+    <div class="form-group">
+      <label>Categoría</label>
+      <select id="prodCategory">
+        <option value="fertilizante">Fertilizante</option>
+        <option value="pesticida">Pesticida / Herbicida</option>
+        <option value="semilla">Semilla</option>
+        <option value="herramienta">Herramienta</option>
+        <option value="insumo">Insumo general</option>
+        <option value="otro">Otro</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Unidad de medida</label>
+      <select id="prodUnit">
+        <option value="kg">Kilos (kg)</option>
+        <option value="lt">Litros (lt)</option>
+        <option value="un">Unidades (un)</option>
+        <option value="sacos">Sacos</option>
+        <option value="cajas">Cajas</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Stock actual</label>
+      <input type="number" id="prodStock" placeholder="Ej: 100" min="0" step="0.1" inputmode="decimal">
+    </div>
+    <div class="form-group">
+      <label>Stock mínimo (alerta)</label>
+      <input type="number" id="prodMinStock" placeholder="Ej: 10" min="0" step="0.1" inputmode="decimal">
+    </div>
+    <input type="hidden" id="prodEditId">
+    <button class="btn btn-primary" onclick="saveProduct()">Guardar producto</button>
+  </div>
+</div>
+
+<!-- Movement Modal -->
+<div class="modal-overlay" id="movementModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="movModalTitle">Ingreso de Stock</h2>
+      <button class="modal-close" onclick="closeModal('movementModal')">&times;</button>
+    </div>
+    <div class="form-group">
+      <label>Fecha</label>
+      <input type="date" id="movDate">
+    </div>
+    <div class="form-group">
+      <label>Producto</label>
+      <select id="movProduct"></select>
+    </div>
+    <div class="form-group">
+      <label id="movQtyLabel">Cantidad a ingresar</label>
+      <input type="number" id="movQty" placeholder="Ej: 25" min="0.1" step="0.1" inputmode="decimal">
+    </div>
+    <div class="form-group">
+      <label>Entregado a / Nota</label>
+      <textarea id="movNote" placeholder="Ej: Juan - para potrero sur"></textarea>
+    </div>
+    <input type="hidden" id="movType">
+    <button class="btn btn-primary" id="movSubmitBtn" onclick="saveMovement()">Guardar</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  DATABASE (IndexedDB)
+// ═══════════════════════════════════════════
+const DB_NAME = 'fundoElAbraDB';
+const DB_VERSION = 1;
+let db;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('fuel')) {
+        const s = d.createObjectStore('fuel', { keyPath: 'id' });
+        s.createIndex('date', 'date');
+        s.createIndex('type', 'type');
+      }
+      if (!d.objectStoreNames.contains('products')) {
+        d.createObjectStore('products', { keyPath: 'id' });
+      }
+      if (!d.objectStoreNames.contains('movements')) {
+        const m = d.createObjectStore('movements', { keyPath: 'id' });
+        m.createIndex('date', 'date');
+        m.createIndex('productId', 'productId');
+        m.createIndex('type', 'type');
+      }
+    };
+    req.onsuccess = (e) => { db = e.target.result; resolve(db); };
+    req.onerror = (e) => reject(e);
+  });
+}
+
+function dbAdd(store, data) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).add(data);
+    tx.oncomplete = () => resolve();
+    tx.onerror = (e) => reject(e);
+  });
+}
+
+function dbPut(store, data) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).put(data);
+    tx.oncomplete = () => resolve();
+    tx.onerror = (e) => reject(e);
+  });
+}
+
+function dbDelete(store, id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = (e) => reject(e);
+  });
+}
+
+function dbGetAll(store) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = (e) => reject(e);
+  });
+}
+
+function dbGet(store, id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).get(id);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = (e) => reject(e);
+  });
+}
+
+// ═══════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function formatDate(d) {
+  const [y, m, dd] = d.split('-');
+  return `${dd}/${m}/${y}`;
+}
+
+function shortDate(d) {
+  const [, m, dd] = d.split('-');
+  return `${dd}/${m}`;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function categoryLabel(c) {
+  const map = {
+    fertilizante: 'Fertilizante',
+    pesticida: 'Pesticida',
+    semilla: 'Semilla',
+    herramienta: 'Herramienta',
+    insumo: 'Insumo',
+    otro: 'Otro'
+  };
+  return map[c] || c;
+}
+
+function categoryEmoji(c) {
+  const map = {
+    fertilizante: '&#129716;',
+    pesticida: '&#128163;',
+    semilla: '&#127793;',
+    herramienta: '&#128295;',
+    insumo: '&#128230;',
+    otro: '&#128196;'
+  };
+  return map[c] || '&#128230;';
+}
+
+// ═══════════════════════════════════════════
+//  AUTH (simple, local)
+// ═══════════════════════════════════════════
+let currentUser = null;
+
+function doLogin() {
+  const name = document.getElementById('loginName').value.trim();
+  const role = document.getElementById('loginRole').value;
+  if (!name) { showToast('Ingresa tu nombre'); return; }
+  currentUser = { name, role };
+  localStorage.setItem('fundoUser', JSON.stringify(currentUser));
+  showApp();
+}
+
+function logout() {
+  if (confirm('¿Cerrar sesión?')) {
+    localStorage.removeItem('fundoUser');
+    currentUser = null;
+    document.getElementById('mainApp').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+  }
+}
+
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  document.getElementById('userBadge').textContent = currentUser.name;
+  refreshAll();
+}
+
+// ═══════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════
+let currentPage = 'inicio';
+
+function showPage(page, el) {
+  currentPage = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  const fab = document.getElementById('fab');
+  fab.classList.toggle('hidden', page === 'reportes');
+
+  refreshAll();
+}
+
+function onFabClick() {
+  if (currentPage === 'combustible') openFuelModal();
+  else if (currentPage === 'bodega') openProductModal();
+  else openFuelModal();
+}
+
+// ═══════════════════════════════════════════
+//  FUEL
+// ═══════════════════════════════════════════
+let fuelFilterType = 'all';
+
+function openFuelModal() {
+  document.getElementById('fuelDate').value = today();
+  document.getElementById('fuelType').value = 'petroleo';
+  document.getElementById('fuelLiters').value = '';
+  document.getElementById('fuelNote').value = '';
+  openModal('fuelModal');
+}
+
+async function saveFuel() {
+  const date = document.getElementById('fuelDate').value;
+  const type = document.getElementById('fuelType').value;
+  const liters = parseFloat(document.getElementById('fuelLiters').value);
+  const note = document.getElementById('fuelNote').value.trim();
+
+  if (!date || !liters || liters <= 0) {
+    showToast('Completa fecha y litros');
+    return;
+  }
+
+  await dbAdd('fuel', {
+    id: genId(),
+    date,
+    type,
+    liters,
+    note,
+    operator: currentUser.name,
+    createdAt: new Date().toISOString()
+  });
+
+  closeModal('fuelModal');
+  showToast('Combustible registrado');
+  refreshAll();
+}
+
+function setFuelFilter(type, el) {
+  fuelFilterType = type;
+  document.querySelectorAll('#fuelFilter .toggle-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderFuel();
+}
+
+async function renderFuel() {
+  let items = await dbGetAll('fuel');
+  if (fuelFilterType !== 'all') items = items.filter(i => i.type === fuelFilterType);
+  items.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
+
+  const el = document.getElementById('fuelList');
+  if (!items.length) {
+    el.innerHTML = '<div class="empty-state"><p>Sin registros de combustible</p></div>';
+    return;
+  }
+
+  el.innerHTML = items.map(i => `
+    <div class="list-item">
+      <div class="list-icon fuel">${i.type === 'petroleo' ? '&#9981;' : '&#9979;'}</div>
+      <div class="list-content">
+        <div class="list-title">${i.type === 'petroleo' ? 'Petróleo' : 'Bencina'}</div>
+        <div class="list-sub">${formatDate(i.date)} &middot; ${i.operator}${i.note ? ' &middot; ' + i.note : ''}</div>
+      </div>
+      <div class="list-value negative">-${i.liters} lt</div>
+      <button class="list-delete" onclick="deleteFuel('${i.id}')" title="Eliminar">&times;</button>
+    </div>
+  `).join('');
+}
+
+async function deleteFuel(id) {
+  if (!confirm('¿Eliminar este registro?')) return;
+  await dbDelete('fuel', id);
+  showToast('Registro eliminado');
+  refreshAll();
+}
+
+// ═══════════════════════════════════════════
+//  PRODUCTS
+// ═══════════════════════════════════════════
+function openProductModal(editId) {
+  document.getElementById('prodEditId').value = editId || '';
+  document.getElementById('productModalTitle').textContent = editId ? 'Editar Producto' : 'Nuevo Producto';
+
+  if (editId) {
+    dbGet('products', editId).then(p => {
+      document.getElementById('prodName').value = p.name;
+      document.getElementById('prodCategory').value = p.category;
+      document.getElementById('prodUnit').value = p.unit;
+      document.getElementById('prodStock').value = p.stock;
+      document.getElementById('prodMinStock').value = p.minStock;
+    });
+  } else {
+    document.getElementById('prodName').value = '';
+    document.getElementById('prodCategory').value = 'fertilizante';
+    document.getElementById('prodUnit').value = 'kg';
+    document.getElementById('prodStock').value = '';
+    document.getElementById('prodMinStock').value = '';
+  }
+  openModal('productModal');
+}
+
+async function saveProduct() {
+  const editId = document.getElementById('prodEditId').value;
+  const name = document.getElementById('prodName').value.trim();
+  const category = document.getElementById('prodCategory').value;
+  const unit = document.getElementById('prodUnit').value;
+  const stock = parseFloat(document.getElementById('prodStock').value) || 0;
+  const minStock = parseFloat(document.getElementById('prodMinStock').value) || 0;
+
+  if (!name) { showToast('Ingresa el nombre del producto'); return; }
+
+  const data = {
+    id: editId || genId(),
+    name,
+    category,
+    unit,
+    stock,
+    minStock,
+    updatedAt: new Date().toISOString()
+  };
+  if (!editId) data.createdAt = new Date().toISOString();
+
+  await dbPut('products', data);
+  closeModal('productModal');
+  showToast(editId ? 'Producto actualizado' : 'Producto creado');
+  refreshAll();
+}
+
+async function deleteProduct(id) {
+  if (!confirm('¿Eliminar este producto y todos sus movimientos?')) return;
+  await dbDelete('products', id);
+  // Delete related movements
+  const movs = await dbGetAll('movements');
+  for (const m of movs) {
+    if (m.productId === id) await dbDelete('movements', m.id);
+  }
+  showToast('Producto eliminado');
+  refreshAll();
+}
+
+async function renderProducts() {
+  const items = await dbGetAll('products');
+  items.sort((a, b) => a.name.localeCompare(b.name));
+
+  const el = document.getElementById('productList');
+  if (!items.length) {
+    el.innerHTML = '<div class="empty-state"><p>Sin productos registrados</p></div>';
+    return;
+  }
+
+  el.innerHTML = items.map(p => {
+    const pct = p.minStock > 0 ? Math.min(100, (p.stock / (p.minStock * 3)) * 100) : 100;
+    const color = p.stock <= p.minStock ? 'var(--red-600)' : p.stock <= p.minStock * 1.5 ? 'var(--amber-600)' : 'var(--green-600)';
+    return `
+    <div class="card" style="cursor:pointer" onclick="openProductModal('${p.id}')">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="list-icon product">${categoryEmoji(p.category)}</div>
+        <div style="flex:1;min-width:0">
+          <div class="list-title">${p.name}</div>
+          <div class="list-sub">${categoryLabel(p.category)}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:20px;font-weight:700;color:${color}">${p.stock}</div>
+          <div style="font-size:11px;color:var(--gray-400)">${p.unit}</div>
+        </div>
+        <button class="list-delete" onclick="event.stopPropagation();deleteProduct('${p.id}')" title="Eliminar">&times;</button>
+      </div>
+      <div class="stock-bar"><div class="stock-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      ${p.stock <= p.minStock ? '<div style="font-size:11px;color:var(--red-600);margin-top:6px;font-weight:600">&#9888; Stock bajo (mínimo: ' + p.minStock + ' ' + p.unit + ')</div>' : ''}
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════
+//  MOVEMENTS
+// ═══════════════════════════════════════════
+let movFilterType = 'all';
+let bodegaTab = 'inventario';
+
+function setBodegaTab(tab, el) {
+  bodegaTab = tab;
+  document.querySelectorAll('#bodegaTabs .toggle-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('bodega-inventario').style.display = tab === 'inventario' ? 'block' : 'none';
+  document.getElementById('bodega-movimientos').style.display = tab === 'movimientos' ? 'block' : 'none';
+}
+
+async function openMovementModal(type) {
+  document.getElementById('movType').value = type;
+  document.getElementById('movModalTitle').textContent = type === 'ingreso' ? 'Ingreso de Stock' : 'Despacho de Producto';
+  document.getElementById('movQtyLabel').textContent = type === 'ingreso' ? 'Cantidad a ingresar' : 'Cantidad a despachar';
+  document.getElementById('movSubmitBtn').className = type === 'ingreso' ? 'btn btn-primary' : 'btn btn-danger';
+  document.getElementById('movSubmitBtn').textContent = type === 'ingreso' ? 'Registrar ingreso' : 'Registrar despacho';
+  document.getElementById('movDate').value = today();
+  document.getElementById('movQty').value = '';
+  document.getElementById('movNote').value = '';
+
+  // Populate products
+  const products = await dbGetAll('products');
+  const sel = document.getElementById('movProduct');
+  sel.innerHTML = products.length
+    ? products.map(p => `<option value="${p.id}">${p.name} (${p.stock} ${p.unit})</option>`).join('')
+    : '<option value="">-- Sin productos --</option>';
+
+  openModal('movementModal');
+}
+
+async function saveMovement() {
+  const type = document.getElementById('movType').value;
+  const date = document.getElementById('movDate').value;
+  const productId = document.getElementById('movProduct').value;
+  const qty = parseFloat(document.getElementById('movQty').value);
+  const note = document.getElementById('movNote').value.trim();
+
+  if (!productId) { showToast('No hay productos creados'); return; }
+  if (!qty || qty <= 0) { showToast('Ingresa una cantidad válida'); return; }
+
+  const product = await dbGet('products', productId);
+  if (!product) { showToast('Producto no encontrado'); return; }
+
+  if (type === 'despacho' && qty > product.stock) {
+    showToast(`Stock insuficiente (disponible: ${product.stock} ${product.unit})`);
+    return;
+  }
+
+  // Update product stock
+  product.stock = type === 'ingreso'
+    ? Math.round((product.stock + qty) * 100) / 100
+    : Math.round((product.stock - qty) * 100) / 100;
+  product.updatedAt = new Date().toISOString();
+  await dbPut('products', product);
+
+  // Save movement
+  await dbAdd('movements', {
+    id: genId(),
+    date,
+    type,
+    productId,
+    productName: product.name,
+    productUnit: product.unit,
+    quantity: qty,
+    note,
+    operator: currentUser.name,
+    createdAt: new Date().toISOString()
+  });
+
+  closeModal('movementModal');
+  showToast(type === 'ingreso' ? 'Ingreso registrado' : 'Despacho registrado');
+  refreshAll();
+}
+
+function setMovFilter(type, el) {
+  movFilterType = type;
+  document.querySelectorAll('#movFilter .filter-chip').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderMovements();
+}
+
+async function renderMovements() {
+  let items = await dbGetAll('movements');
+  if (movFilterType !== 'all') items = items.filter(i => i.type === movFilterType);
+  items.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
+
+  const el = document.getElementById('movementList');
+  if (!items.length) {
+    el.innerHTML = '<div class="empty-state"><p>Sin movimientos</p></div>';
+    return;
+  }
+
+  el.innerHTML = items.map(m => `
+    <div class="list-item">
+      <div class="list-icon ${m.type}">${m.type === 'ingreso' ? '&#8599;' : '&#8600;'}</div>
+      <div class="list-content">
+        <div class="list-title">${m.productName}</div>
+        <div class="list-sub">${formatDate(m.date)} &middot; ${m.operator}${m.note ? ' &middot; ' + m.note : ''}</div>
+      </div>
+      <div class="list-value ${m.type === 'ingreso' ? 'positive' : 'negative'}">
+        ${m.type === 'ingreso' ? '+' : '-'}${m.quantity} ${m.productUnit}
+      </div>
+      <button class="list-delete" onclick="deleteMovement('${m.id}')" title="Eliminar">&times;</button>
+    </div>
+  `).join('');
+}
+
+async function deleteMovement(id) {
+  if (!confirm('¿Eliminar este movimiento? El stock del producto se ajustará.')) return;
+  const mov = await dbGet('movements', id);
+  if (mov) {
+    const product = await dbGet('products', mov.productId);
+    if (product) {
+      product.stock = mov.type === 'ingreso'
+        ? Math.round((product.stock - mov.quantity) * 100) / 100
+        : Math.round((product.stock + mov.quantity) * 100) / 100;
+      await dbPut('products', product);
+    }
+    await dbDelete('movements', id);
+  }
+  showToast('Movimiento eliminado y stock ajustado');
+  refreshAll();
+}
+
+// ═══════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════
+async function renderDashboard() {
+  const fuels = await dbGetAll('fuel');
+  const products = await dbGetAll('products');
+  const movements = await dbGetAll('movements');
+
+  const todayStr = today();
+  const monthStr = todayStr.slice(0, 7);
+
+  const fuelToday = fuels.filter(f => f.date === todayStr).reduce((s, f) => s + f.liters, 0);
+  const fuelMonth = fuels.filter(f => f.date.startsWith(monthStr)).reduce((s, f) => s + f.liters, 0);
+  const lowStock = products.filter(p => p.stock <= p.minStock).length;
+
+  document.getElementById('statFuelToday').textContent = Math.round(fuelToday * 10) / 10;
+  document.getElementById('statFuelMonth').textContent = Math.round(fuelMonth * 10) / 10;
+  document.getElementById('statProducts').textContent = products.length;
+  document.getElementById('statAlerts').textContent = lowStock;
+
+  // Recent activity (last 10)
+  const all = [
+    ...fuels.map(f => ({
+      ...f,
+      _type: 'fuel',
+      _sort: f.createdAt || f.date,
+      _icon: f.type === 'petroleo' ? '&#9981;' : '&#9979;',
+      _iconClass: 'fuel',
+      _title: (f.type === 'petroleo' ? 'Petróleo' : 'Bencina') + ' - ' + f.liters + ' lt',
+      _sub: f.operator + ' &middot; ' + formatDate(f.date),
+      _value: '-' + f.liters + ' lt',
+      _valueClass: 'negative'
+    })),
+    ...movements.map(m => ({
+      ...m,
+      _type: 'movement',
+      _sort: m.createdAt || m.date,
+      _icon: m.type === 'ingreso' ? '&#8599;' : '&#8600;',
+      _iconClass: m.type,
+      _title: m.productName,
+      _sub: m.operator + ' &middot; ' + formatDate(m.date),
+      _value: (m.type === 'ingreso' ? '+' : '-') + m.quantity + ' ' + m.productUnit,
+      _valueClass: m.type === 'ingreso' ? 'positive' : 'negative'
+    }))
+  ];
+  all.sort((a, b) => b._sort.localeCompare(a._sort));
+  const recent = all.slice(0, 10);
+
+  const actEl = document.getElementById('recentActivity');
+  if (!recent.length) {
+    actEl.innerHTML = '<div class="empty-state"><p>Sin actividad todavía</p></div>';
+  } else {
+    actEl.innerHTML = recent.map(r => `
+      <div class="list-item">
+        <div class="list-icon ${r._iconClass}">${r._icon}</div>
+        <div class="list-content">
+          <div class="list-title">${r._title}</div>
+          <div class="list-sub">${r._sub}</div>
+        </div>
+        <div class="list-value ${r._valueClass}">${r._value}</div>
+      </div>
+    `).join('');
+  }
+
+  // Alerts
+  const alertProducts = products.filter(p => p.stock <= p.minStock);
+  const alertsCard = document.getElementById('alertsCard');
+  const alertsList = document.getElementById('alertsList');
+  if (alertProducts.length) {
+    alertsCard.style.display = 'block';
+    alertsList.innerHTML = alertProducts.map(p => `
+      <div class="list-item">
+        <div class="list-icon product" style="background:var(--red-100)">${categoryEmoji(p.category)}</div>
+        <div class="list-content">
+          <div class="list-title">${p.name}</div>
+          <div class="list-sub">Mínimo: ${p.minStock} ${p.unit}</div>
+        </div>
+        <div class="list-value negative">${p.stock} ${p.unit}</div>
+      </div>
+    `).join('');
+  } else {
+    alertsCard.style.display = 'none';
+  }
+}
+
+// ═══════════════════════════════════════════
+//  REPORTS
+// ═══════════════════════════════════════════
+async function renderReports() {
+  const fuels = await dbGetAll('fuel');
+  const movements = await dbGetAll('movements');
+  const products = await dbGetAll('products');
+  const monthStr = today().slice(0, 7);
+
+  const fuelMonth = fuels.filter(f => f.date.startsWith(monthStr));
+  const petrol = fuelMonth.filter(f => f.type === 'petroleo').reduce((s, f) => s + f.liters, 0);
+  const benzin = fuelMonth.filter(f => f.type === 'bencina').reduce((s, f) => s + f.liters, 0);
+
+  const movMonth = movements.filter(m => m.date.startsWith(monthStr));
+  const ingresos = movMonth.filter(m => m.type === 'ingreso').length;
+  const despachos = movMonth.filter(m => m.type === 'despacho').length;
+
+  document.getElementById('monthSummary').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div style="background:var(--amber-100);padding:12px;border-radius:10px;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:var(--amber-600)">${Math.round(petrol * 10) / 10} lt</div>
+        <div style="font-size:11px;color:var(--gray-500)">Petróleo</div>
+      </div>
+      <div style="background:var(--amber-100);padding:12px;border-radius:10px;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:var(--amber-600)">${Math.round(benzin * 10) / 10} lt</div>
+        <div style="font-size:11px;color:var(--gray-500)">Bencina</div>
+      </div>
+      <div style="background:var(--green-100);padding:12px;border-radius:10px;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:var(--green-700)">${ingresos}</div>
+        <div style="font-size:11px;color:var(--gray-500)">Ingresos</div>
+      </div>
+      <div style="background:var(--red-100);padding:12px;border-radius:10px;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:var(--red-600)">${despachos}</div>
+        <div style="font-size:11px;color:var(--gray-500)">Despachos</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--gray-400);text-align:center">Resumen de ${monthStr}</div>
+  `;
+}
+
+async function exportCSV(type) {
+  let csv = '';
+  let filename = '';
+
+  if (type === 'fuel') {
+    const items = await dbGetAll('fuel');
+    items.sort((a, b) => b.date.localeCompare(a.date));
+    csv = 'Fecha,Tipo,Litros,Operario,Nota\n';
+    csv += items.map(i =>
+      `${i.date},${i.type === 'petroleo' ? 'Petróleo' : 'Bencina'},${i.liters},"${i.operator}","${i.note || ''}"`
+    ).join('\n');
+    filename = 'combustible_' + today() + '.csv';
+  } else if (type === 'products') {
+    const items = await dbGetAll('products');
+    csv = 'Nombre,Categoría,Unidad,Stock Actual,Stock Mínimo\n';
+    csv += items.map(i =>
+      `"${i.name}",${categoryLabel(i.category)},${i.unit},${i.stock},${i.minStock}`
+    ).join('\n');
+    filename = 'inventario_' + today() + '.csv';
+  } else {
+    const items = await dbGetAll('movements');
+    items.sort((a, b) => b.date.localeCompare(a.date));
+    csv = 'Fecha,Tipo,Producto,Cantidad,Unidad,Operario,Nota\n';
+    csv += items.map(i =>
+      `${i.date},${i.type === 'ingreso' ? 'Ingreso' : 'Despacho'},"${i.productName}",${i.quantity},${i.productUnit},"${i.operator}","${i.note || ''}"`
+    ).join('\n');
+    filename = 'movimientos_' + today() + '.csv';
+  }
+
+  const BOM = '﻿';
+  const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Archivo descargado: ' + filename);
+}
+
+async function clearAllData() {
+  if (!confirm('¿Estás seguro? Se eliminarán TODOS los datos.')) return;
+  if (!confirm('Esta acción NO se puede deshacer. ¿Continuar?')) return;
+
+  const stores = ['fuel', 'products', 'movements'];
+  for (const store of stores) {
+    const items = await dbGetAll(store);
+    for (const item of items) {
+      await dbDelete(store, item.id);
+    }
+  }
+  showToast('Todos los datos eliminados');
+  refreshAll();
+}
+
+// ═══════════════════════════════════════════
+//  MODALS
+// ═══════════════════════════════════════════
+function openModal(id) {
+  document.getElementById(id).classList.add('active');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', (e) => {
+    if (e.target === m) m.classList.remove('active');
+  });
+});
+
+// ═══════════════════════════════════════════
+//  REFRESH
+// ═══════════════════════════════════════════
+function refreshAll() {
+  renderDashboard();
+  renderFuel();
+  renderProducts();
+  renderMovements();
+  renderReports();
+}
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+async function init() {
+  await openDB();
+
+  const saved = localStorage.getItem('fundoUser');
+  if (saved) {
+    currentUser = JSON.parse(saved);
+    showApp();
+  }
+}
+
+init();
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
