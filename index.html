@@ -216,6 +216,31 @@ body {
   resize: vertical;
   min-height: 60px;
 }
+.search-results {
+  display: none;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 10px;
+  margin-top: 6px;
+  background: white;
+}
+.search-results.show { display: block; }
+.search-results .result-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--gray-100);
+  font-size: 14px;
+}
+.search-results .result-item:last-child { border-bottom: none; }
+.search-results .result-item:hover,
+.search-results .result-item.active { background: var(--gray-50); }
+.search-results .result-item small {
+  display: block;
+  color: var(--gray-400);
+  font-size: 11px;
+  margin-top: 2px;
+}
 
 /* ── Buttons ── */
 .btn {
@@ -314,7 +339,7 @@ body {
 }
 .list-icon.fuel { background: var(--amber-100); }
 .list-icon.ingreso { background: var(--green-100); }
-.list-icon.despacho { background: var(--red-100); }
+.list-icon.salida { background: var(--red-100); }
 .list-icon.product { background: var(--blue-100); }
 .list-content { flex: 1; min-width: 0; }
 .list-title {
@@ -696,13 +721,13 @@ body {
         <div class="section-title">Movimientos de Stock</div>
         <div class="btn-row">
           <button class="btn btn-sm btn-primary" onclick="openMovementModal('ingreso')">+ Ingreso</button>
-          <button class="btn btn-sm btn-danger" onclick="openMovementModal('despacho')">- Despacho</button>
+          <button class="btn btn-sm btn-danger" onclick="openMovementModal('salida')">- Salida</button>
         </div>
       </div>
       <div class="filter-bar" id="movFilter">
         <button class="filter-chip active" onclick="setMovFilter('all',this)">Todo</button>
         <button class="filter-chip" onclick="setMovFilter('ingreso',this)">Ingresos</button>
-        <button class="filter-chip" onclick="setMovFilter('despacho',this)">Despachos</button>
+        <button class="filter-chip" onclick="setMovFilter('salida',this)">Salidas</button>
       </div>
       <div class="card">
         <div id="movementList">
@@ -812,108 +837,11 @@ body {
     </div>
     <div class="form-group">
       <label>Nombre del producto</label>
-      <input type="text" id="prodName" list="prodNameList" placeholder="Ej: Fertilizante NPK">
-      <datalist id="prodNameList">
-        <option value="ABSOLUTO"></option>
-        <option value="ACIDO BORICO"></option>
-        <option value="ACIDO FOSFORICO"></option>
-        <option value="AGRIGENT"></option>
-        <option value="AGRIMEK"></option>
-        <option value="AGROCUP"></option>
-        <option value="AGROCUP WG"></option>
-        <option value="ALION"></option>
-        <option value="AMISTAR TOP"></option>
-        <option value="AVAUNT"></option>
-        <option value="AZUFRE MOJABLE"></option>
-        <option value="BASACOTE 6 M"></option>
-        <option value="BELT"></option>
-        <option value="BIO LIFE PSYCHIRO"></option>
-        <option value="BIOIL SPRAY"></option>
-        <option value="BIOLIFEFOLIAR"></option>
-        <option value="BIOLIFEPSYCHIRO"></option>
-        <option value="BUMPER"></option>
-        <option value="CALYPSO"></option>
-        <option value="CARBARIL"></option>
-        <option value="CARBOXIGRAN"></option>
-        <option value="CLORURO DE POTASIO"></option>
-        <option value="CLOSER"></option>
-        <option value="COLA FRIA"></option>
-        <option value="CONSUL"></option>
-        <option value="CORAGEN"></option>
-        <option value="CREDI FULL"></option>
-        <option value="CUPRO BORDELES"></option>
-        <option value="DELEGATE"></option>
-        <option value="DIAZOL"></option>
-        <option value="DIFECONAZOL"></option>
-        <option value="DODINE"></option>
-        <option value="DORMEX"></option>
-        <option value="DROPPER"></option>
-        <option value="ELIPHOS"></option>
-        <option value="ENVIDOR"></option>
-        <option value="ERGER"></option>
-        <option value="FLUMIOXAZIN"></option>
-        <option value="FONTELIS"></option>
-        <option value="GALIGAN"></option>
-        <option value="GRANITE"></option>
-        <option value="HERBADOX"></option>
-        <option value="HURRICANE"></option>
-        <option value="INTREPID"></option>
-        <option value="IQUAT"></option>
-        <option value="KALIGREN"></option>
-        <option value="KARATE"></option>
-        <option value="KELPAK"></option>
-        <option value="KNOCKOUT"></option>
-        <option value="KRESOXIN"></option>
-        <option value="KRIMET"></option>
-        <option value="LUNA EXPERIENCE"></option>
-        <option value="MANCOZEB 80 WP"></option>
-        <option value="MEGAFOL"></option>
-        <option value="MICROTOP MANGANESO"></option>
-        <option value="MILBEKNOUT"></option>
-        <option value="MIMIC"></option>
-        <option value="MOVENTO SMART"></option>
-        <option value="MYSTIC"></option>
-        <option value="NITRATO DE CALCIO"></option>
-        <option value="NITRATO DE MAGNESIO"></option>
-        <option value="NITRATO DE POTASIO"></option>
-        <option value="NORDOX"></option>
-        <option value="NU FILM"></option>
-        <option value="NUTRI BORO"></option>
-        <option value="NUTRI CALCIO"></option>
-        <option value="NUTRI MAGNESIO"></option>
-        <option value="NUTRI POTASIO"></option>
-        <option value="NUTRI ZINC"></option>
-        <option value="NUZOL"></option>
-        <option value="O K 100"></option>
-        <option value="ODIN 43"></option>
-        <option value="PIRIPROXIFEN"></option>
-        <option value="POWER MAXX"></option>
-        <option value="QUILATE"></option>
-        <option value="RECOP"></option>
-        <option value="RHIZOBACTER"></option>
-        <option value="ROUNDUP MAX"></option>
-        <option value="S F T"></option>
-        <option value="SELECRON"></option>
-        <option value="SILWET"></option>
-        <option value="SIPCAZIN"></option>
-        <option value="STIMPLEX"></option>
-        <option value="STONE GROSS"></option>
-        <option value="SUCCESS"></option>
-        <option value="SULFATO DE CALCIO"></option>
-        <option value="SULFATO DE MAGNESIO"></option>
-        <option value="SULFATO DE POTASIO"></option>
-        <option value="SULFATO DE ZINC"></option>
-        <option value="SYPCACIN"></option>
-        <option value="SYSTAHANE"></option>
-        <option value="TABLETAS"></option>
-        <option value="TANGO"></option>
-        <option value="TEBUCONAZOLE"></option>
-        <option value="TENS ZOLAR"></option>
-        <option value="UREA"></option>
-        <option value="V P FILTER"></option>
-        <option value="VALOR"></option>
-        <option value="WELGRO CU+ZN"></option>
-      </datalist>
+      <input type="text" id="prodName" placeholder="Ej: Fertilizante NPK">
+    </div>
+    <div class="form-group">
+      <label>Ingrediente activo (I. Activo)</label>
+      <input type="text" id="prodActivo" placeholder="Ej: LAMBDA CIHALOTRINA">
     </div>
     <div class="form-group">
       <label>Categoría</label>
@@ -931,6 +859,8 @@ body {
       <select id="prodUnit">
         <option value="kg">Kilos (kg)</option>
         <option value="lt">Litros (lt)</option>
+        <option value="gr">Gramos (gr)</option>
+        <option value="cc">Centímetros cúbicos (cc)</option>
         <option value="un">Unidades (un)</option>
         <option value="sacos">Sacos</option>
         <option value="cajas">Cajas</option>
@@ -962,7 +892,23 @@ body {
     </div>
     <div class="form-group">
       <label>Producto</label>
-      <select id="movProduct"></select>
+      <input type="text" id="movProductSearch" placeholder="Buscar producto..." autocomplete="off"
+        oninput="filterMovProducts()" onfocus="filterMovProducts()"
+        onblur="setTimeout(()=>document.getElementById('movProductResults').classList.remove('show'), 150)">
+      <input type="hidden" id="movProduct">
+      <div id="movProductResults" class="search-results"></div>
+    </div>
+    <div class="form-group" id="movCostCenterGroup" style="display:none">
+      <label>Centro de Costo</label>
+      <select id="movCostCenter">
+        <option value="">-- Selecciona --</option>
+        <option value="CEREZAS">Cerezas</option>
+        <option value="CIRUELAS">Ciruelas</option>
+        <option value="MANZANAS">Manzanas</option>
+        <option value="NOGALES">Nogales</option>
+        <option value="NECTARINES">Nectarines</option>
+        <option value="OTRO">Otro</option>
+      </select>
     </div>
     <div class="form-group">
       <label id="movQtyLabel">Cantidad a ingresar</label>
@@ -1111,6 +1057,130 @@ function categoryEmoji(c) {
 }
 
 // ═══════════════════════════════════════════
+//  SEED DATA (catalogo desde BODEGA.xlsm)
+// ═══════════════════════════════════════════
+const SEED_PRODUCTS = [
+  {name:"ABSOLUTO",activo:"IMIDACLOPRID",unit:"lt",stock:1,category:"pesticida"},
+  {name:"ACIDO BORICO",activo:"FURACILINA/NITROFURAL",unit:"lt",stock:25,category:"pesticida"},
+  {name:"ACIDO FOSFORICO",activo:"",unit:"lt",stock:5000,category:"pesticida"},
+  {name:"AGRIGENT",activo:"OXITETRACYCLINE HYDROCHLORIDE",unit:"lt",stock:0,category:"pesticida"},
+  {name:"AGRIMEK",activo:"ABAMECTINA",unit:"lt",stock:0,category:"pesticida"},
+  {name:"AGROCUP",activo:"OXICLORURO DE COBRE",unit:"lt",stock:0,category:"pesticida"},
+  {name:"AGROCUP WG",activo:"",unit:"lt",stock:400,category:"pesticida"},
+  {name:"ALION",activo:"HERBICIDA",unit:"lt",stock:0.5,category:"pesticida"},
+  {name:"AMISTAR TOP",activo:"AZOXISTROBINA",unit:"lt",stock:3,category:"pesticida"},
+  {name:"AVAUNT",activo:"INDOXACARB",unit:"lt",stock:1.2,category:"pesticida"},
+  {name:"AZUFRE MOJABLE",activo:"AZUFRE",unit:"lt",stock:0,category:"pesticida"},
+  {name:"BASACOTE 6 M",activo:"",unit:"kg",stock:0,category:"fertilizante"},
+  {name:"BELT",activo:"FLUBENDIAMIDE",unit:"lt",stock:1,category:"pesticida"},
+  {name:"BIO LIFE PSYCHIRO",activo:"",unit:"gr",stock:0.5,category:"pesticida"},
+  {name:"BIOIL SPRAY",activo:"",unit:"lt",stock:1935,category:"pesticida"},
+  {name:"BIOLIFEFOLIAR",activo:"",unit:"gr",stock:0.25,category:"pesticida"},
+  {name:"BIOLIFEPSYCHIRO",activo:"",unit:"lt",stock:19,category:"pesticida"},
+  {name:"BUMPER",activo:"PROPICONAZOLE",unit:"lt",stock:4,category:"pesticida"},
+  {name:"CALYPSO",activo:"THIACLOPRID",unit:"lt",stock:7,category:"pesticida"},
+  {name:"CARBARIL",activo:"CARBARILO",unit:"lt",stock:6,category:"pesticida"},
+  {name:"CARBOXIGRAN",activo:"FERTIZILANTE FOLIAR",unit:"lt",stock:0,category:"fertilizante"},
+  {name:"CLORURO DE POTASIO",activo:"",unit:"kg",stock:4000,category:"fertilizante"},
+  {name:"CLOSER",activo:"SULFOXAFLOR 240",unit:"cc",stock:0.5,category:"pesticida"},
+  {name:"COLA FRIA",activo:"",unit:"lt",stock:0,category:"insumo"},
+  {name:"CONSUL",activo:"DODINA",unit:"lt",stock:30,category:"pesticida"},
+  {name:"CORAGEN",activo:"CLORANTRANILIPROL",unit:"lt",stock:0,category:"pesticida"},
+  {name:"CREDI FULL",activo:"HERBICIDA",unit:"lt",stock:0,category:"pesticida"},
+  {name:"CUPRO BORDELES",activo:"",unit:"lt",stock:60,category:"pesticida"},
+  {name:"DELEGATE",activo:"SPINETORAM",unit:"gr",stock:0.6,category:"pesticida"},
+  {name:"DIAZOL",activo:"DIAZINON",unit:"lt",stock:10,category:"pesticida"},
+  {name:"DIFECONAZOL",activo:"DIFECONAZOL",unit:"lt",stock:3,category:"pesticida"},
+  {name:"DODINE",activo:"",unit:"lt",stock:8.5,category:"pesticida"},
+  {name:"DORMEX",activo:"",unit:"lt",stock:525,category:"insumo"},
+  {name:"DROPPER",activo:"TIDIAZURON",unit:"lt",stock:0,category:"pesticida"},
+  {name:"ELIPHOS",activo:"FERTIZILANTE FOLIAR",unit:"lt",stock:0,category:"fertilizante"},
+  {name:"ENVIDOR",activo:"ESPIRODICLOFENO",unit:"lt",stock:0,category:"pesticida"},
+  {name:"ERGER",activo:"",unit:"lt",stock:0,category:"fertilizante"},
+  {name:"FLUMIOXAZIN",activo:"FLUMIOXAZINA",unit:"lt",stock:0,category:"pesticida"},
+  {name:"FONTELIS",activo:"PENTIOPIRAD",unit:"lt",stock:0,category:"pesticida"},
+  {name:"GALIGAN",activo:"HERBICIDA",unit:"lt",stock:0,category:"pesticida"},
+  {name:"GRANITE",activo:"HERBICIDA",unit:"lt",stock:34,category:"pesticida"},
+  {name:"HERBADOX",activo:"HERBICIDA",unit:"lt",stock:0,category:"pesticida"},
+  {name:"HURRICANE",activo:"ACETAMIPRID",unit:"gr",stock:0.3,category:"pesticida"},
+  {name:"INTREPID",activo:"METOXIFENOCIDE",unit:"lt",stock:7,category:"pesticida"},
+  {name:"IQUAT",activo:"HERBICIDA",unit:"lt",stock:75,category:"pesticida"},
+  {name:"KALIGREN",activo:"",unit:"lt",stock:22,category:"pesticida"},
+  {name:"KARATE",activo:"LAMBDA CIHALOTRINA",unit:"lt",stock:40,category:"pesticida"},
+  {name:"KELPAK",activo:"ALGAS MARINAS ECKLONIA",unit:"lt",stock:140,category:"fertilizante"},
+  {name:"KNOCKOUT",activo:"LAMBDA CIHALOTRINA",unit:"lt",stock:5,category:"pesticida"},
+  {name:"KRESOXIN",activo:"KRESOXIM METILO",unit:"lt",stock:10,category:"pesticida"},
+  {name:"KRIMET",activo:"KRESOXIM METILO",unit:"lt",stock:4,category:"pesticida"},
+  {name:"LUNA EXPERIENCE",activo:"FLUOPYRAM",unit:"lt",stock:5,category:"pesticida"},
+  {name:"MANCOZEB 80 WP",activo:"",unit:"lt",stock:0,category:"pesticida"},
+  {name:"MEGAFOL",activo:"BIO ESTIMULANTE",unit:"lt",stock:40,category:"fertilizante"},
+  {name:"MICROTOP MANGANESO",activo:"",unit:"lt",stock:60,category:"fertilizante"},
+  {name:"MILBEKNOUT",activo:"MILBEMECTIN",unit:"lt",stock:0,category:"pesticida"},
+  {name:"MIMIC",activo:"TEBUFENOCIDA",unit:"lt",stock:0,category:"pesticida"},
+  {name:"MOVENTO SMART",activo:"ESPIROTETRAMATO",unit:"lt",stock:8,category:"pesticida"},
+  {name:"MYSTIC",activo:"EPOXICONAZOL",unit:"lt",stock:4,category:"pesticida"},
+  {name:"NITRATO DE CALCIO",activo:"",unit:"kg",stock:16100,category:"fertilizante"},
+  {name:"NITRATO DE MAGNESIO",activo:"",unit:"kg",stock:3000,category:"fertilizante"},
+  {name:"NITRATO DE POTASIO",activo:"",unit:"kg",stock:5760,category:"fertilizante"},
+  {name:"NORDOX",activo:"",unit:"lt",stock:0,category:"pesticida"},
+  {name:"NU FILM",activo:"",unit:"lt",stock:0,category:"insumo"},
+  {name:"NUTRI BORO",activo:"",unit:"lt",stock:10,category:"fertilizante"},
+  {name:"NUTRI CALCIO",activo:"",unit:"lt",stock:10,category:"fertilizante"},
+  {name:"NUTRI MAGNESIO",activo:"",unit:"lt",stock:25,category:"fertilizante"},
+  {name:"NUTRI POTASIO",activo:"",unit:"lt",stock:0,category:"fertilizante"},
+  {name:"NUTRI ZINC",activo:"",unit:"lt",stock:20,category:"fertilizante"},
+  {name:"NUZOL",activo:"HERBICIDA",unit:"lt",stock:102,category:"pesticida"},
+  {name:"O K 100",activo:"",unit:"lt",stock:0,category:"insumo"},
+  {name:"ODIN 43",activo:"TEBUCONAZOLE",unit:"lt",stock:1,category:"pesticida"},
+  {name:"PIRIPROXIFEN",activo:"INSECTICIDA",unit:"lt",stock:43,category:"pesticida"},
+  {name:"POWER MAXX",activo:"HERBICIDA",unit:"lt",stock:0,category:"pesticida"},
+  {name:"QUILATE",activo:"ACETAMIPRID",unit:"gr",stock:0,category:"pesticida"},
+  {name:"RECOP",activo:"OXICLORURO DE COBRE",unit:"lt",stock:25,category:"pesticida"},
+  {name:"RHIZOBACTER",activo:"",unit:"lt",stock:0,category:"fertilizante"},
+  {name:"ROUNDUP MAX",activo:"HERBICIDA",unit:"lt",stock:120,category:"pesticida"},
+  {name:"S F T",activo:"",unit:"lt",stock:225,category:"insumo"},
+  {name:"SELECRON",activo:"PROFENOFOS",unit:"lt",stock:0,category:"pesticida"},
+  {name:"SILWET",activo:"COPOLIMERO DE POLIETER",unit:"lt",stock:5.88,category:"insumo"},
+  {name:"SIPCAZIN",activo:"HERBICIDA",unit:"lt",stock:8,category:"pesticida"},
+  {name:"STIMPLEX",activo:"EXTRACTO DE ALGAS",unit:"lt",stock:0,category:"fertilizante"},
+  {name:"STONE GROSS",activo:"DICLORPROP",unit:"lt",stock:5,category:"pesticida"},
+  {name:"SUCCESS",activo:"ESPINOSAD",unit:"lt",stock:2,category:"pesticida"},
+  {name:"SULFATO DE CALCIO",activo:"",unit:"kg",stock:500,category:"fertilizante"},
+  {name:"SULFATO DE MAGNESIO",activo:"",unit:"kg",stock:3500,category:"fertilizante"},
+  {name:"SULFATO DE POTASIO",activo:"",unit:"kg",stock:1500,category:"fertilizante"},
+  {name:"SULFATO DE ZINC",activo:"",unit:"kg",stock:6880,category:"fertilizante"},
+  {name:"SYPCACIN",activo:"HERBICIDA",unit:"lt",stock:8,category:"pesticida"},
+  {name:"SYSTAHANE",activo:"MICLOBUTANIL",unit:"lt",stock:44,category:"pesticida"},
+  {name:"TABLETAS",activo:"",unit:"lt",stock:0,category:"insumo"},
+  {name:"TANGO",activo:"HERBICIDA",unit:"lt",stock:0,category:"pesticida"},
+  {name:"TEBUCONAZOLE",activo:"TEBUCONAZOLE",unit:"lt",stock:6,category:"pesticida"},
+  {name:"TENS ZOLAR",activo:"",unit:"lt",stock:0,category:"pesticida"},
+  {name:"UREA",activo:"",unit:"kg",stock:0,category:"fertilizante"},
+  {name:"V P FILTER",activo:"FERTILIZANTE",unit:"lt",stock:6,category:"fertilizante"},
+  {name:"VALOR",activo:"HERBICIDA",unit:"lt",stock:3.2,category:"pesticida"},
+  {name:"WELGRO CU+ZN",activo:"",unit:"lt",stock:48,category:"pesticida"}
+];
+
+async function seedInitialProducts() {
+  const existing = await dbGetAll('products');
+  const existingNames = new Set(existing.map(p => p.name.trim().toUpperCase()));
+  const toInsert = SEED_PRODUCTS.filter(p => !existingNames.has(p.name));
+  for (const p of toInsert) {
+    await dbAdd('products', {
+      id: genId(),
+      name: p.name,
+      activo: p.activo,
+      category: p.category,
+      unit: p.unit,
+      stock: p.stock,
+      minStock: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+  }
+}
+
+// ═══════════════════════════════════════════
 //  AUTH (simple, local)
 // ═══════════════════════════════════════════
 let currentUser = null;
@@ -1251,6 +1321,7 @@ function openProductModal(editId) {
   if (editId) {
     dbGet('products', editId).then(p => {
       document.getElementById('prodName').value = p.name;
+      document.getElementById('prodActivo').value = p.activo || '';
       document.getElementById('prodCategory').value = p.category;
       document.getElementById('prodUnit').value = p.unit;
       document.getElementById('prodStock').value = p.stock;
@@ -1258,6 +1329,7 @@ function openProductModal(editId) {
     });
   } else {
     document.getElementById('prodName').value = '';
+    document.getElementById('prodActivo').value = '';
     document.getElementById('prodCategory').value = 'fertilizante';
     document.getElementById('prodUnit').value = 'kg';
     document.getElementById('prodStock').value = '';
@@ -1269,6 +1341,7 @@ function openProductModal(editId) {
 async function saveProduct() {
   const editId = document.getElementById('prodEditId').value;
   const name = document.getElementById('prodName').value.trim();
+  const activo = document.getElementById('prodActivo').value.trim();
   const category = document.getElementById('prodCategory').value;
   const unit = document.getElementById('prodUnit').value;
   const stock = parseFloat(document.getElementById('prodStock').value) || 0;
@@ -1279,6 +1352,7 @@ async function saveProduct() {
   const data = {
     id: editId || genId(),
     name,
+    activo,
     category,
     unit,
     stock,
@@ -1324,7 +1398,7 @@ async function renderProducts() {
         <div class="list-icon product">${categoryEmoji(p.category)}</div>
         <div style="flex:1;min-width:0">
           <div class="list-title">${p.name}</div>
-          <div class="list-sub">${categoryLabel(p.category)}</div>
+          <div class="list-sub">${categoryLabel(p.category)}${p.activo ? ' &middot; I.A.: ' + p.activo : ''}</div>
         </div>
         <div style="text-align:right">
           <div style="font-size:20px;font-weight:700;color:${color}">${p.stock}</div>
@@ -1352,40 +1426,84 @@ function setBodegaTab(tab, el) {
   document.getElementById('bodega-movimientos').style.display = tab === 'movimientos' ? 'block' : 'none';
 }
 
+let movProductsCache = [];
+
 async function openMovementModal(type) {
   document.getElementById('movType').value = type;
-  document.getElementById('movModalTitle').textContent = type === 'ingreso' ? 'Ingreso de Stock' : 'Despacho de Producto';
-  document.getElementById('movQtyLabel').textContent = type === 'ingreso' ? 'Cantidad a ingresar' : 'Cantidad a despachar';
+  document.getElementById('movModalTitle').textContent = type === 'ingreso' ? 'Ingreso de Stock' : 'Salida de Producto';
+  document.getElementById('movQtyLabel').textContent = type === 'ingreso' ? 'Cantidad a ingresar' : 'Cantidad a retirar';
   document.getElementById('movSubmitBtn').className = type === 'ingreso' ? 'btn btn-primary' : 'btn btn-danger';
-  document.getElementById('movSubmitBtn').textContent = type === 'ingreso' ? 'Registrar ingreso' : 'Registrar despacho';
+  document.getElementById('movSubmitBtn').textContent = type === 'ingreso' ? 'Registrar ingreso' : 'Registrar salida';
+  document.getElementById('movCostCenterGroup').style.display = type === 'salida' ? 'block' : 'none';
+  document.getElementById('movCostCenter').value = '';
   document.getElementById('movDate').value = today();
   document.getElementById('movQty').value = '';
   document.getElementById('movNote').value = '';
+  document.getElementById('movProductSearch').value = '';
+  document.getElementById('movProduct').value = '';
 
-  // Populate products
-  const products = await dbGetAll('products');
-  const sel = document.getElementById('movProduct');
-  sel.innerHTML = products.length
-    ? products.map(p => `<option value="${p.id}">${p.name} (${p.stock} ${p.unit})</option>`).join('')
-    : '<option value="">-- Sin productos --</option>';
+  // Load products for the searchable picker
+  movProductsCache = await dbGetAll('products');
+  movProductsCache.sort((a, b) => a.name.localeCompare(b.name));
+  renderMovProductResults('');
 
   openModal('movementModal');
+}
+
+function renderMovProductResults(query) {
+  const list = document.getElementById('movProductResults');
+  const q = query.trim().toLowerCase();
+  let matches = movProductsCache;
+  if (q) {
+    matches = movProductsCache.filter(p =>
+      p.name.toLowerCase().includes(q) || (p.activo && p.activo.toLowerCase().includes(q))
+    );
+  }
+  matches = matches.slice(0, 30);
+
+  if (!movProductsCache.length) {
+    list.innerHTML = '<div class="result-item" style="color:var(--gray-400)">Sin productos creados</div>';
+  } else if (!matches.length) {
+    list.innerHTML = '<div class="result-item" style="color:var(--gray-400)">Sin coincidencias</div>';
+  } else {
+    list.innerHTML = matches.map(p => `
+      <div class="result-item" onmousedown="event.preventDefault();selectMovProduct('${p.id}')">
+        ${p.name}
+        <small>${p.activo ? p.activo + ' &middot; ' : ''}Stock: ${p.stock} ${p.unit}</small>
+      </div>`).join('');
+  }
+  list.classList.add('show');
+}
+
+function filterMovProducts() {
+  document.getElementById('movProduct').value = '';
+  renderMovProductResults(document.getElementById('movProductSearch').value);
+}
+
+function selectMovProduct(id) {
+  const p = movProductsCache.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('movProduct').value = id;
+  document.getElementById('movProductSearch').value = p.name;
+  document.getElementById('movProductResults').classList.remove('show');
 }
 
 async function saveMovement() {
   const type = document.getElementById('movType').value;
   const date = document.getElementById('movDate').value;
   const productId = document.getElementById('movProduct').value;
+  const costCenter = document.getElementById('movCostCenter').value;
   const qty = parseFloat(document.getElementById('movQty').value);
   const note = document.getElementById('movNote').value.trim();
 
-  if (!productId) { showToast('No hay productos creados'); return; }
+  if (!productId) { showToast('Selecciona un producto de la lista'); return; }
+  if (type === 'salida' && !costCenter) { showToast('Selecciona el centro de costo'); return; }
   if (!qty || qty <= 0) { showToast('Ingresa una cantidad válida'); return; }
 
   const product = await dbGet('products', productId);
   if (!product) { showToast('Producto no encontrado'); return; }
 
-  if (type === 'despacho' && qty > product.stock) {
+  if (type === 'salida' && qty > product.stock) {
     showToast(`Stock insuficiente (disponible: ${product.stock} ${product.unit})`);
     return;
   }
@@ -1406,13 +1524,14 @@ async function saveMovement() {
     productName: product.name,
     productUnit: product.unit,
     quantity: qty,
+    costCenter: type === 'salida' ? costCenter : '',
     note,
     operator: currentUser.name,
     createdAt: new Date().toISOString()
   });
 
   closeModal('movementModal');
-  showToast(type === 'ingreso' ? 'Ingreso registrado' : 'Despacho registrado');
+  showToast(type === 'ingreso' ? 'Ingreso registrado' : 'Salida registrada');
   refreshAll();
 }
 
@@ -1439,7 +1558,7 @@ async function renderMovements() {
       <div class="list-icon ${m.type}">${m.type === 'ingreso' ? '&#8599;' : '&#8600;'}</div>
       <div class="list-content">
         <div class="list-title">${m.productName}</div>
-        <div class="list-sub">${formatDate(m.date)} &middot; ${m.operator}${m.note ? ' &middot; ' + m.note : ''}</div>
+        <div class="list-sub">${formatDate(m.date)} &middot; ${m.operator}${m.costCenter ? ' &middot; ' + m.costCenter : ''}${m.note ? ' &middot; ' + m.note : ''}</div>
       </div>
       <div class="list-value ${m.type === 'ingreso' ? 'positive' : 'negative'}">
         ${m.type === 'ingreso' ? '+' : '-'}${m.quantity} ${m.productUnit}
@@ -1566,7 +1685,7 @@ async function renderReports() {
 
   const movMonth = movements.filter(m => m.date.startsWith(monthStr));
   const ingresos = movMonth.filter(m => m.type === 'ingreso').length;
-  const despachos = movMonth.filter(m => m.type === 'despacho').length;
+  const despachos = movMonth.filter(m => m.type === 'salida').length;
 
   document.getElementById('monthSummary').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
@@ -1584,7 +1703,7 @@ async function renderReports() {
       </div>
       <div style="background:var(--red-100);padding:12px;border-radius:10px;text-align:center">
         <div style="font-size:20px;font-weight:700;color:var(--red-600)">${despachos}</div>
-        <div style="font-size:11px;color:var(--gray-500)">Despachos</div>
+        <div style="font-size:11px;color:var(--gray-500)">Salidas</div>
       </div>
     </div>
     <div style="font-size:12px;color:var(--gray-400);text-align:center">Resumen de ${monthStr}</div>
@@ -1605,17 +1724,17 @@ async function exportCSV(type) {
     filename = 'combustible_' + today() + '.csv';
   } else if (type === 'products') {
     const items = await dbGetAll('products');
-    csv = 'Nombre,Categoría,Unidad,Stock Actual,Stock Mínimo\n';
+    csv = 'Nombre,I. Activo,Categoría,Unidad,Stock Actual,Stock Mínimo\n';
     csv += items.map(i =>
-      `"${i.name}",${categoryLabel(i.category)},${i.unit},${i.stock},${i.minStock}`
+      `"${i.name}","${i.activo || ''}",${categoryLabel(i.category)},${i.unit},${i.stock},${i.minStock}`
     ).join('\n');
     filename = 'inventario_' + today() + '.csv';
   } else {
     const items = await dbGetAll('movements');
     items.sort((a, b) => b.date.localeCompare(a.date));
-    csv = 'Fecha,Tipo,Producto,Cantidad,Unidad,Operario,Nota\n';
+    csv = 'Fecha,Tipo,Producto,Cantidad,Unidad,Centro de Costo,Operario,Nota\n';
     csv += items.map(i =>
-      `${i.date},${i.type === 'ingreso' ? 'Ingreso' : 'Despacho'},"${i.productName}",${i.quantity},${i.productUnit},"${i.operator}","${i.note || ''}"`
+      `${i.date},${i.type === 'ingreso' ? 'Ingreso' : 'Salida'},"${i.productName}",${i.quantity},${i.productUnit},${i.costCenter || ''},"${i.operator}","${i.note || ''}"`
     ).join('\n');
     filename = 'movimientos_' + today() + '.csv';
   }
@@ -1680,6 +1799,7 @@ function refreshAll() {
 // ═══════════════════════════════════════════
 async function init() {
   await openDB();
+  await seedInitialProducts();
 
   const saved = localStorage.getItem('fundoUser');
   if (saved) {
