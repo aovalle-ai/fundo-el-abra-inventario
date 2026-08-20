@@ -689,6 +689,10 @@ body {
       <div class="section-header">
         <div class="section-title">Stock de Combustible</div>
       </div>
+      <div class="filter-bar" id="fuelStockViewToggle">
+        <button class="filter-chip active" onclick="setFuelStockViewMode('list',this)">&#9776; Lista</button>
+        <button class="filter-chip" onclick="setFuelStockViewMode('table',this)">&#9638; Tabla</button>
+      </div>
       <div id="fuelStockList"></div>
     </div>
 
@@ -700,6 +704,10 @@ body {
           <button class="btn btn-sm btn-primary" onclick="openFuelModal('ingreso')">+ Ingreso</button>
           <button class="btn btn-sm btn-danger" onclick="openFuelModal('salida')">- Salida</button>
         </div>
+      </div>
+      <div class="filter-bar" id="fuelMovViewToggle">
+        <button class="filter-chip active" onclick="setFuelMovViewMode('list',this)">&#9776; Lista</button>
+        <button class="filter-chip" onclick="setFuelMovViewMode('table',this)">&#9638; Tabla</button>
       </div>
       <div class="toggle-tabs" id="fuelFilter">
         <button class="toggle-tab active" data-filter="all" onclick="setFuelFilter('all',this)">Todo</button>
@@ -745,11 +753,17 @@ body {
           <option value="insumo">Insumo</option>
           <option value="otro">Otro</option>
         </select>
-        <select id="prodListSort" onchange="renderProducts()" style="flex:1;padding:12px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:13px;background:white;color:var(--gray-800)">
-          <option value="name">Ordenar: Nombre</option>
-          <option value="stock_desc">Cantidad: mayor a menor</option>
-          <option value="stock_asc">Cantidad: menor a mayor</option>
-        </select>
+        <div id="prodListSortWrap" style="flex:1">
+          <select id="prodListSort" onchange="renderProducts()" style="width:100%;padding:12px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:13px;background:white;color:var(--gray-800)">
+            <option value="name">Ordenar: Nombre</option>
+            <option value="stock_desc">Cantidad: mayor a menor</option>
+            <option value="stock_asc">Cantidad: menor a mayor</option>
+          </select>
+        </div>
+      </div>
+      <div class="filter-bar" id="prodViewToggle">
+        <button class="filter-chip active" onclick="setProductViewMode('list',this)">&#9776; Lista</button>
+        <button class="filter-chip" onclick="setProductViewMode('table',this)">&#9638; Tabla</button>
       </div>
       <div id="productList">
         <div class="empty-state"><p>Sin productos registrados</p></div>
@@ -764,6 +778,10 @@ body {
           <button class="btn btn-sm btn-primary" onclick="openMovementModal('ingreso')">+ Ingreso</button>
           <button class="btn btn-sm btn-danger" onclick="openMovementModal('salida')">- Salida</button>
         </div>
+      </div>
+      <div class="filter-bar" id="movViewToggle">
+        <button class="filter-chip active" onclick="setMovViewMode('list',this)">&#9776; Lista</button>
+        <button class="filter-chip" onclick="setMovViewMode('table',this)">&#9638; Tabla</button>
       </div>
       <div class="filter-bar" id="movFilter">
         <button class="filter-chip active" onclick="setMovFilter('all',this)">Todo</button>
@@ -1091,6 +1109,32 @@ function formatCLP(n) {
   return '$' + Math.round(n || 0).toLocaleString('es-CL');
 }
 
+function dateOffset(daysAgo) {
+  return new Date(Date.now() - daysAgo * 86400000).toISOString().slice(0, 10);
+}
+
+function sortRows(rows, col, dir) {
+  return rows.slice().sort((a, b) => {
+    let av = a[col], bv = b[col];
+    if (typeof av === 'string' || typeof bv === 'string') {
+      av = (av || '').toString().toLowerCase();
+      bv = (bv || '').toString().toLowerCase();
+      return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    }
+    av = av || 0; bv = bv || 0;
+    return dir === 'asc' ? av - bv : bv - av;
+  });
+}
+
+function sortArrow(state, col) {
+  return state.col === col ? (state.dir === 'asc' ? ' &#9650;' : ' &#9660;') : '';
+}
+
+function toggleSort(state, col, defaultDir) {
+  if (state.col === col) state.dir = state.dir === 'asc' ? 'desc' : 'asc';
+  else { state.col = col; state.dir = defaultDir || 'asc'; }
+}
+
 function shortDate(d) {
   const [, m, dd] = d.split('-');
   return `${dd}/${m}`;
@@ -1259,6 +1303,98 @@ async function seedFuelStock() {
   }
 }
 
+const DEMO_FUEL_MOVES = [
+  { daysAgo: 6, type: 'petroleo', movType: 'ingreso', liters: 200, cost: 190000, note: 'Compra distribuidora' },
+  { daysAgo: 5, type: 'petroleo', movType: 'salida', liters: 40, note: 'Tractor John Deere - potrero norte' },
+  { daysAgo: 4, type: 'bencina', movType: 'ingreso', liters: 80, cost: 88000, note: 'Compra bomba local' },
+  { daysAgo: 3, type: 'bencina', movType: 'salida', liters: 15, note: 'Motosierra' },
+  { daysAgo: 2, type: 'petroleo', movType: 'salida', liters: 35, note: 'Camión aljibe' },
+  { daysAgo: 1, type: 'petroleo', movType: 'ingreso', liters: 150, cost: 148500, note: 'Compra distribuidora' },
+  { daysAgo: 0, type: 'bencina', movType: 'salida', liters: 10, note: 'Generador' },
+  { daysAgo: 0, type: 'petroleo', movType: 'salida', liters: 25, note: 'Tractor - potrero sur' }
+];
+
+const DEMO_PRODUCT_MOVES = [
+  { daysAgo: 6, name: 'SULFATO DE ZINC', type: 'ingreso', qty: 500, cost: 375000, note: 'Compra proveedor' },
+  { daysAgo: 6, name: 'CUPRO BORDELES', type: 'ingreso', qty: 100, cost: 850000, note: 'Compra proveedor' },
+  { daysAgo: 5, name: 'CUPRO BORDELES', type: 'salida', qty: 30, costCenter: 'CIRUELAS', note: 'Aplicación foliar' },
+  { daysAgo: 4, name: 'NITRATO DE POTASIO', type: 'ingreso', qty: 2000, cost: 1600000, note: 'Compra proveedor' },
+  { daysAgo: 3, name: 'NITRATO DE POTASIO', type: 'salida', qty: 500, costCenter: 'MANZANAS', note: 'Fertirriego' },
+  { daysAgo: 2, name: 'KARATE', type: 'ingreso', qty: 20, cost: 900000, note: 'Compra proveedor' },
+  { daysAgo: 1, name: 'KARATE', type: 'salida', qty: 10, costCenter: 'CEREZAS', note: 'Control de plagas' },
+  { daysAgo: 0, name: 'UREA', type: 'ingreso', qty: 1000, cost: 550000, note: 'Compra proveedor' },
+  { daysAgo: 0, name: 'SULFATO DE ZINC', type: 'salida', qty: 200, costCenter: 'NOGALES', note: 'Fertilización foliar' }
+];
+
+async function seedDemoData() {
+  if (localStorage.getItem('fundoDemoSeeded')) return;
+
+  for (const m of DEMO_FUEL_MOVES) {
+    const date = dateOffset(m.daysAgo);
+    let fs = await dbGet('fuelStock', m.type);
+    if (!fs) fs = { type: m.type, stock: 0, totalValue: 0 };
+    let cost;
+    if (m.movType === 'ingreso') {
+      cost = m.cost;
+      fs.stock = round2(fs.stock + m.liters);
+      fs.totalValue = round2(fs.totalValue + cost);
+    } else {
+      const avgCost = fs.stock > 0 ? fs.totalValue / fs.stock : 0;
+      cost = round2(avgCost * m.liters);
+      fs.stock = round2(fs.stock - m.liters);
+      fs.totalValue = Math.max(0, round2(fs.totalValue - cost));
+    }
+    await dbPut('fuelStock', fs);
+    await dbAdd('fuel', {
+      id: genId(),
+      date,
+      type: m.type,
+      movType: m.movType,
+      liters: m.liters,
+      cost,
+      note: m.note,
+      operator: 'Sistema (demo)',
+      createdAt: new Date().toISOString()
+    });
+  }
+
+  for (const m of DEMO_PRODUCT_MOVES) {
+    const date = dateOffset(m.daysAgo);
+    const products = await dbGetAll('products');
+    const product = products.find(p => p.name === m.name);
+    if (!product) continue;
+    let cost;
+    if (m.type === 'ingreso') {
+      cost = m.cost;
+      product.stock = round2(product.stock + m.qty);
+      product.totalValue = round2((product.totalValue || 0) + cost);
+    } else {
+      const avgCost = product.stock > 0 ? (product.totalValue || 0) / product.stock : 0;
+      cost = round2(avgCost * m.qty);
+      product.stock = round2(product.stock - m.qty);
+      product.totalValue = Math.max(0, round2((product.totalValue || 0) - cost));
+    }
+    product.updatedAt = new Date().toISOString();
+    await dbPut('products', product);
+    await dbAdd('movements', {
+      id: genId(),
+      date,
+      type: m.type,
+      productId: product.id,
+      productName: product.name,
+      productUnit: product.unit,
+      quantity: m.qty,
+      cost,
+      costCenter: m.costCenter || '',
+      note: m.note,
+      operator: 'Sistema (demo)',
+      createdAt: new Date().toISOString()
+    });
+  }
+
+  localStorage.setItem('fundoDemoSeeded', '1');
+}
+
 // ═══════════════════════════════════════════
 //  AUTH (simple, local)
 // ═══════════════════════════════════════════
@@ -1319,6 +1455,34 @@ function onFabClick() {
 let fuelFilterType = 'all';
 let fuelMovFilterType = 'all';
 let combustibleTab = 'inventario';
+let fuelStockViewMode = 'list';
+let fuelStockTableSort = { col: 'type', dir: 'asc' };
+let fuelMovViewMode = 'list';
+let fuelMovTableSort = { col: 'date', dir: 'desc' };
+
+function setFuelStockViewMode(mode, el) {
+  fuelStockViewMode = mode;
+  document.querySelectorAll('#fuelStockViewToggle .filter-chip').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderFuelStock();
+}
+
+function setFuelStockTableSort(col) {
+  toggleSort(fuelStockTableSort, col);
+  renderFuelStock();
+}
+
+function setFuelMovViewMode(mode, el) {
+  fuelMovViewMode = mode;
+  document.querySelectorAll('#fuelMovViewToggle .filter-chip').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderFuel();
+}
+
+function setFuelMovTableSort(col) {
+  toggleSort(fuelMovTableSort, col, 'desc');
+  renderFuel();
+}
 
 function setCombustibleTab(tab, el) {
   combustibleTab = tab;
@@ -1415,6 +1579,38 @@ function setFuelMovFilter(type, el) {
 async function renderFuelStock() {
   const petro = (await dbGet('fuelStock', 'petroleo')) || { type: 'petroleo', stock: 0, totalValue: 0 };
   const benc = (await dbGet('fuelStock', 'bencina')) || { type: 'bencina', stock: 0, totalValue: 0 };
+  const labels = { petroleo: 'Petróleo (Diésel)', bencina: 'Bencina' };
+  const icons = { petroleo: '&#9981;', bencina: '&#9979;' };
+
+  if (fuelStockViewMode === 'table') {
+    const rows = [petro, benc].map(f => ({ ...f, avgCost: f.stock > 0 ? f.totalValue / f.stock : 0 }));
+    const sorted = sortRows(rows, fuelStockTableSort.col, fuelStockTableSort.dir);
+    document.getElementById('fuelStockList').innerHTML = `
+      <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="border-bottom:1.5px solid var(--gray-200)">
+            <th style="text-align:left;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setFuelStockTableSort('type')">Combustible${sortArrow(fuelStockTableSort, 'type')}</th>
+            <th style="text-align:right;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setFuelStockTableSort('stock')">Stock (lt)${sortArrow(fuelStockTableSort, 'stock')}</th>
+            <th style="text-align:right;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setFuelStockTableSort('avgCost')">Costo prom.${sortArrow(fuelStockTableSort, 'avgCost')}</th>
+            <th style="text-align:right;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setFuelStockTableSort('totalValue')">Valor total${sortArrow(fuelStockTableSort, 'totalValue')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sorted.map(f => `
+            <tr style="border-bottom:1px solid var(--gray-100)">
+              <td style="padding:8px 6px;font-weight:600">${labels[f.type]}</td>
+              <td style="text-align:right;padding:8px 6px">${round2(f.stock)}</td>
+              <td style="text-align:right;padding:8px 6px">${f.avgCost > 0 ? formatCLP(f.avgCost) + '/lt' : '-'}</td>
+              <td style="text-align:right;padding:8px 6px">${f.totalValue > 0 ? formatCLP(f.totalValue) : '-'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      </div>
+    `;
+    return;
+  }
 
   const card = (f, label, icon) => {
     const avg = f.stock > 0 ? f.totalValue / f.stock : 0;
@@ -1436,20 +1632,55 @@ async function renderFuelStock() {
   };
 
   document.getElementById('fuelStockList').innerHTML =
-    card(petro, 'Petróleo (Diésel)', '&#9981;') + card(benc, 'Bencina', '&#9979;');
+    card(petro, labels.petroleo, icons.petroleo) + card(benc, labels.bencina, icons.bencina);
 }
 
 async function renderFuel() {
   let items = await dbGetAll('fuel');
   if (fuelFilterType !== 'all') items = items.filter(i => i.type === fuelFilterType);
   if (fuelMovFilterType !== 'all') items = items.filter(i => (i.movType || 'salida') === fuelMovFilterType);
-  items.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
 
   const el = document.getElementById('fuelList');
   if (!items.length) {
     el.innerHTML = '<div class="empty-state"><p>Sin registros de combustible</p></div>';
     return;
   }
+
+  if (fuelMovViewMode === 'table') {
+    const rows = items.map(i => ({ ...i, movType: i.movType || 'salida' }));
+    const sorted = sortRows(rows, fuelMovTableSort.col, fuelMovTableSort.dir);
+    el.innerHTML = `
+      <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="border-bottom:1.5px solid var(--gray-200)">
+            <th style="text-align:left;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setFuelMovTableSort('type')">Combustible${sortArrow(fuelMovTableSort, 'type')}</th>
+            <th style="text-align:left;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setFuelMovTableSort('date')">Fecha${sortArrow(fuelMovTableSort, 'date')}</th>
+            <th style="text-align:left;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setFuelMovTableSort('movType')">Movimiento${sortArrow(fuelMovTableSort, 'movType')}</th>
+            <th style="text-align:right;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setFuelMovTableSort('liters')">Litros${sortArrow(fuelMovTableSort, 'liters')}</th>
+            <th style="text-align:right;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setFuelMovTableSort('cost')">Costo${sortArrow(fuelMovTableSort, 'cost')}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sorted.map(i => `
+            <tr style="border-bottom:1px solid var(--gray-100)">
+              <td style="padding:8px 6px;font-weight:600">${i.type === 'petroleo' ? 'Petróleo' : 'Bencina'}</td>
+              <td style="padding:8px 6px">${formatDate(i.date)}</td>
+              <td style="padding:8px 6px;color:${i.movType === 'ingreso' ? 'var(--green-700)' : 'var(--red-600)'}">${i.movType === 'ingreso' ? 'Ingreso' : 'Salida'}</td>
+              <td style="text-align:right;padding:8px 6px">${i.movType === 'ingreso' ? '+' : '-'}${i.liters}</td>
+              <td style="text-align:right;padding:8px 6px">${i.cost ? formatCLP(i.cost) : '-'}</td>
+              <td style="text-align:right;padding:8px 6px"><button class="list-delete" onclick="deleteFuel('${i.id}')" title="Eliminar">&times;</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      </div>
+    `;
+    return;
+  }
+
+  items.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
 
   el.innerHTML = items.map(i => {
     const mt = i.movType || 'salida';
@@ -1494,6 +1725,22 @@ async function deleteFuel(id) {
 // ═══════════════════════════════════════════
 //  PRODUCTS
 // ═══════════════════════════════════════════
+let productViewMode = 'list';
+let prodTableSort = { col: 'name', dir: 'asc' };
+
+function setProductViewMode(mode, el) {
+  productViewMode = mode;
+  document.querySelectorAll('#prodViewToggle .filter-chip').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('prodListSortWrap').style.display = mode === 'table' ? 'none' : 'block';
+  renderProducts();
+}
+
+function setProdTableSort(col) {
+  toggleSort(prodTableSort, col);
+  renderProducts();
+}
+
 function openProductModal(editId) {
   document.getElementById('prodEditId').value = editId || '';
   document.getElementById('productModalTitle').textContent = editId ? 'Editar Producto' : 'Nuevo Producto';
@@ -1570,7 +1817,6 @@ async function renderProducts() {
   const all = await dbGetAll('products');
   const q = (document.getElementById('prodListSearch').value || '').trim().toLowerCase();
   const catFilter = document.getElementById('prodListCategoryFilter').value;
-  const sortMode = document.getElementById('prodListSort').value;
 
   let items = all.filter(p => {
     if (catFilter && p.category !== catFilter) return false;
@@ -1578,15 +1824,50 @@ async function renderProducts() {
     return true;
   });
 
-  if (sortMode === 'stock_desc') items.sort((a, b) => b.stock - a.stock);
-  else if (sortMode === 'stock_asc') items.sort((a, b) => a.stock - b.stock);
-  else items.sort((a, b) => a.name.localeCompare(b.name));
-
   const el = document.getElementById('productList');
   if (!items.length) {
     el.innerHTML = '<div class="empty-state"><p>Sin productos que coincidan</p></div>';
     return;
   }
+
+  if (productViewMode === 'table') {
+    const rows = items.map(p => ({ ...p, avgCost: p.stock > 0 ? (p.totalValue || 0) / p.stock : 0 }));
+    const sorted = sortRows(rows, prodTableSort.col, prodTableSort.dir);
+    el.innerHTML = `
+      <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="border-bottom:1.5px solid var(--gray-200)">
+            <th style="text-align:left;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setProdTableSort('name')">Producto${sortArrow(prodTableSort, 'name')}</th>
+            <th style="text-align:left;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setProdTableSort('category')">Tipo${sortArrow(prodTableSort, 'category')}</th>
+            <th style="text-align:left;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setProdTableSort('activo')">I.A.${sortArrow(prodTableSort, 'activo')}</th>
+            <th style="text-align:right;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setProdTableSort('stock')">Stock${sortArrow(prodTableSort, 'stock')}</th>
+            <th style="text-align:right;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setProdTableSort('avgCost')">Costo prom.${sortArrow(prodTableSort, 'avgCost')}</th>
+            <th style="text-align:right;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setProdTableSort('totalValue')">Valor total${sortArrow(prodTableSort, 'totalValue')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sorted.map(p => `
+            <tr style="border-bottom:1px solid var(--gray-100);cursor:pointer" onclick="openProductModal('${p.id}')">
+              <td style="padding:8px 6px;font-weight:600">${p.name}</td>
+              <td style="padding:8px 6px">${categoryLabel(p.category)}</td>
+              <td style="padding:8px 6px;color:var(--gray-500)">${p.activo || '-'}</td>
+              <td style="text-align:right;padding:8px 6px">${p.stock} ${p.unit}</td>
+              <td style="text-align:right;padding:8px 6px">${p.avgCost > 0 ? formatCLP(p.avgCost) : '-'}</td>
+              <td style="text-align:right;padding:8px 6px">${p.totalValue > 0 ? formatCLP(p.totalValue) : '-'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      </div>
+    `;
+    return;
+  }
+
+  const sortMode = document.getElementById('prodListSort').value;
+  if (sortMode === 'stock_desc') items.sort((a, b) => b.stock - a.stock);
+  else if (sortMode === 'stock_asc') items.sort((a, b) => a.stock - b.stock);
+  else items.sort((a, b) => a.name.localeCompare(b.name));
 
   el.innerHTML = items.map(p => {
     const pct = p.minStock > 0 ? Math.min(100, (p.stock / (p.minStock * 3)) * 100) : 100;
@@ -1618,6 +1899,20 @@ async function renderProducts() {
 // ═══════════════════════════════════════════
 let movFilterType = 'all';
 let bodegaTab = 'inventario';
+let movViewMode = 'list';
+let movTableSort = { col: 'date', dir: 'desc' };
+
+function setMovViewMode(mode, el) {
+  movViewMode = mode;
+  document.querySelectorAll('#movViewToggle .filter-chip').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderMovements();
+}
+
+function setMovTableSort(col) {
+  toggleSort(movTableSort, col, 'desc');
+  renderMovements();
+}
 
 function setBodegaTab(tab, el) {
   bodegaTab = tab;
@@ -1759,13 +2054,61 @@ function setMovFilter(type, el) {
 async function renderMovements() {
   let items = await dbGetAll('movements');
   if (movFilterType !== 'all') items = items.filter(i => i.type === movFilterType);
-  items.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
 
   const el = document.getElementById('movementList');
   if (!items.length) {
     el.innerHTML = '<div class="empty-state"><p>Sin movimientos</p></div>';
     return;
   }
+
+  if (movViewMode === 'table') {
+    const products = await dbGetAll('products');
+    const byId = {};
+    products.forEach(p => byId[p.id] = p);
+    const rows = items.map(m => ({
+      ...m,
+      category: byId[m.productId] ? categoryLabel(byId[m.productId].category) : '',
+      activo: byId[m.productId] ? (byId[m.productId].activo || '') : ''
+    }));
+    const sorted = sortRows(rows, movTableSort.col, movTableSort.dir);
+    el.innerHTML = `
+      <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="border-bottom:1.5px solid var(--gray-200)">
+            <th style="text-align:left;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setMovTableSort('productName')">Producto${sortArrow(movTableSort, 'productName')}</th>
+            <th style="text-align:left;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setMovTableSort('category')">Tipo${sortArrow(movTableSort, 'category')}</th>
+            <th style="text-align:left;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setMovTableSort('activo')">I.A.${sortArrow(movTableSort, 'activo')}</th>
+            <th style="text-align:left;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setMovTableSort('date')">Fecha${sortArrow(movTableSort, 'date')}</th>
+            <th style="text-align:left;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setMovTableSort('type')">Movimiento${sortArrow(movTableSort, 'type')}</th>
+            <th style="text-align:right;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setMovTableSort('quantity')">Cantidad${sortArrow(movTableSort, 'quantity')}</th>
+            <th style="text-align:right;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setMovTableSort('cost')">Costo${sortArrow(movTableSort, 'cost')}</th>
+            <th style="text-align:left;padding:8px 6px;cursor:pointer;color:var(--gray-600);white-space:nowrap" onclick="setMovTableSort('costCenter')">Centro Costo${sortArrow(movTableSort, 'costCenter')}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sorted.map(m => `
+            <tr style="border-bottom:1px solid var(--gray-100)">
+              <td style="padding:8px 6px;font-weight:600">${m.productName}</td>
+              <td style="padding:8px 6px">${m.category || '-'}</td>
+              <td style="padding:8px 6px;color:var(--gray-500)">${m.activo || '-'}</td>
+              <td style="padding:8px 6px">${formatDate(m.date)}</td>
+              <td style="padding:8px 6px;color:${m.type === 'ingreso' ? 'var(--green-700)' : 'var(--red-600)'}">${m.type === 'ingreso' ? 'Ingreso' : 'Salida'}</td>
+              <td style="text-align:right;padding:8px 6px">${m.type === 'ingreso' ? '+' : '-'}${m.quantity} ${m.productUnit}</td>
+              <td style="text-align:right;padding:8px 6px">${m.cost ? formatCLP(m.cost) : '-'}</td>
+              <td style="padding:8px 6px">${m.costCenter || '-'}</td>
+              <td style="text-align:right;padding:8px 6px"><button class="list-delete" onclick="deleteMovement('${m.id}')" title="Eliminar">&times;</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      </div>
+    `;
+    return;
+  }
+
+  items.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
 
   el.innerHTML = items.map(m => `
     <div class="list-item">
@@ -2119,6 +2462,7 @@ async function init() {
   await openDB();
   await seedInitialProducts();
   await seedFuelStock();
+  await seedDemoData();
 
   const saved = localStorage.getItem('fundoUser');
   if (saved) {
