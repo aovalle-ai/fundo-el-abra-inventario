@@ -644,11 +644,10 @@ body {
     </div>
     <div class="form-group">
       <label>Rol</label>
-      <select id="loginRole">
-        <option value="operario">Operario</option>
-        <option value="bodeguero">Bodeguero</option>
-        <option value="admin">Administrador</option>
-      </select>
+      <input type="text" id="loginRole_search" placeholder="Selecciona un rol" autocomplete="off"
+        oninput="selFilter('loginRole')" onfocus="selFocus('loginRole')" onblur="selBlur('loginRole')">
+      <input type="hidden" id="loginRole" value="operario">
+      <div class="search-results" id="loginRole_results"></div>
     </div>
     <button class="btn btn-primary" onclick="doLogin()">Entrar</button>
   </div>
@@ -811,24 +810,31 @@ body {
         <button class="btn btn-sm btn-primary" onclick="openProductModal()">+ Producto</button>
       </div>
       <div class="form-group" style="margin-bottom:8px">
-        <input type="text" id="prodListSearch" placeholder="Buscar por nombre o ingrediente activo..." oninput="renderProducts()">
+        <label>Producto</label>
+        <input type="text" id="prodListNameFilter_search" placeholder="Todos los productos" autocomplete="off"
+          oninput="selFilter('prodListNameFilter')" onfocus="selFocus('prodListNameFilter')" onblur="selBlur('prodListNameFilter')">
+        <input type="hidden" id="prodListNameFilter" value="">
+        <div class="search-results" id="prodListNameFilter_results"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:8px">
+        <label>Ingrediente Activo</label>
+        <input type="text" id="prodListActivoFilter_search" placeholder="Todos los ingredientes activos" autocomplete="off"
+          oninput="selFilter('prodListActivoFilter')" onfocus="selFocus('prodListActivoFilter')" onblur="selBlur('prodListActivoFilter')">
+        <input type="hidden" id="prodListActivoFilter" value="">
+        <div class="search-results" id="prodListActivoFilter_results"></div>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:14px">
-        <select id="prodListCategoryFilter" onchange="renderProducts()" style="flex:1;padding:12px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:13px;background:white;color:var(--gray-800)">
-          <option value="">Todos los tipos</option>
-          <option value="fertilizante">Fertilizante</option>
-          <option value="pesticida">Pesticida</option>
-          <option value="semilla">Semilla</option>
-          <option value="herramienta">Herramienta</option>
-          <option value="insumo">Insumo</option>
-          <option value="otro">Otro</option>
-        </select>
-        <div id="prodListSortWrap" style="flex:1">
-          <select id="prodListSort" onchange="renderProducts()" style="width:100%;padding:12px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:13px;background:white;color:var(--gray-800)">
-            <option value="name">Ordenar: Nombre</option>
-            <option value="stock_desc">Cantidad: mayor a menor</option>
-            <option value="stock_asc">Cantidad: menor a mayor</option>
-          </select>
+        <div class="form-group" style="flex:1;margin-bottom:0">
+          <input type="text" id="prodListCategoryFilter_search" placeholder="Todos los tipos" autocomplete="off"
+            oninput="selFilter('prodListCategoryFilter')" onfocus="selFocus('prodListCategoryFilter')" onblur="selBlur('prodListCategoryFilter')">
+          <input type="hidden" id="prodListCategoryFilter" value="">
+          <div class="search-results" id="prodListCategoryFilter_results"></div>
+        </div>
+        <div class="form-group" id="prodListSortWrap" style="flex:1;margin-bottom:0">
+          <input type="text" id="prodListSort_search" placeholder="Ordenar..." autocomplete="off"
+            oninput="selFilter('prodListSort')" onfocus="selFocus('prodListSort')" onblur="selBlur('prodListSort')">
+          <input type="hidden" id="prodListSort" value="name">
+          <div class="search-results" id="prodListSort_results"></div>
         </div>
       </div>
       <div class="filter-bar" id="prodViewToggle">
@@ -856,18 +862,25 @@ body {
         <button class="filter-chip" onclick="exportMovementsExcel()">&#8681; Excel</button>
       </div>
       <div class="form-group" style="margin-bottom:8px">
-        <input type="text" id="movListSearch" placeholder="Buscar por producto, ingrediente activo o nota..." oninput="renderMovements()">
+        <label>Producto</label>
+        <input type="text" id="movListNameFilter_search" placeholder="Todos los productos" autocomplete="off"
+          oninput="selFilter('movListNameFilter')" onfocus="selFocus('movListNameFilter')" onblur="selBlur('movListNameFilter')">
+        <input type="hidden" id="movListNameFilter" value="">
+        <div class="search-results" id="movListNameFilter_results"></div>
       </div>
-      <div style="margin-bottom:8px">
-        <select id="movCostCenterFilter" onchange="renderMovements()" style="width:100%;padding:12px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:13px;background:white;color:var(--gray-800)">
-          <option value="">Todos los centros de costo</option>
-          <option value="CEREZAS">Cerezas</option>
-          <option value="CIRUELAS">Ciruelas</option>
-          <option value="MANZANAS">Manzanas</option>
-          <option value="NOGALES">Nogales</option>
-          <option value="NECTARINES">Nectarines</option>
-          <option value="OTRO">Otro</option>
-        </select>
+      <div class="form-group" style="margin-bottom:8px">
+        <label>Ingrediente Activo</label>
+        <input type="text" id="movListActivoFilter_search" placeholder="Todos los ingredientes activos" autocomplete="off"
+          oninput="selFilter('movListActivoFilter')" onfocus="selFocus('movListActivoFilter')" onblur="selBlur('movListActivoFilter')">
+        <input type="hidden" id="movListActivoFilter" value="">
+        <div class="search-results" id="movListActivoFilter_results"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:8px">
+        <label>Centro de Costo</label>
+        <input type="text" id="movCostCenterFilter_search" placeholder="Todos los centros de costo" autocomplete="off"
+          oninput="selFilter('movCostCenterFilter')" onfocus="selFocus('movCostCenterFilter')" onblur="selBlur('movCostCenterFilter')">
+        <input type="hidden" id="movCostCenterFilter" value="">
+        <div class="search-results" id="movCostCenterFilter_results"></div>
       </div>
       <div class="filter-bar" id="movFilter">
         <button class="filter-chip active" onclick="setMovFilter('all',this)">Todo</button>
@@ -915,18 +928,25 @@ body {
       </div>
       <div id="reportProductFilters">
         <div class="form-group" style="margin-bottom:8px">
-          <input type="text" id="reportProductSearch" placeholder="Buscar producto o ingrediente activo..." oninput="renderReports()">
+          <label>Producto</label>
+          <input type="text" id="reportProductNameFilter_search" placeholder="Todos los productos" autocomplete="off"
+            oninput="selFilter('reportProductNameFilter')" onfocus="selFocus('reportProductNameFilter')" onblur="selBlur('reportProductNameFilter')">
+          <input type="hidden" id="reportProductNameFilter" value="">
+          <div class="search-results" id="reportProductNameFilter_results"></div>
         </div>
-        <div style="margin-bottom:8px">
-          <select id="reportCategoryFilter" onchange="renderReports()" style="width:100%;padding:12px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:13px;background:white;color:var(--gray-800)">
-            <option value="">Todos los tipos</option>
-            <option value="fertilizante">Fertilizante</option>
-            <option value="pesticida">Pesticida</option>
-            <option value="semilla">Semilla</option>
-            <option value="herramienta">Herramienta</option>
-            <option value="insumo">Insumo</option>
-            <option value="otro">Otro</option>
-          </select>
+        <div class="form-group" style="margin-bottom:8px">
+          <label>Ingrediente Activo</label>
+          <input type="text" id="reportProductActivoFilter_search" placeholder="Todos los ingredientes activos" autocomplete="off"
+            oninput="selFilter('reportProductActivoFilter')" onfocus="selFocus('reportProductActivoFilter')" onblur="selBlur('reportProductActivoFilter')">
+          <input type="hidden" id="reportProductActivoFilter" value="">
+          <div class="search-results" id="reportProductActivoFilter_results"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:8px">
+          <label>Tipo</label>
+          <input type="text" id="reportCategoryFilter_search" placeholder="Todos los tipos" autocomplete="off"
+            oninput="selFilter('reportCategoryFilter')" onfocus="selFocus('reportCategoryFilter')" onblur="selBlur('reportCategoryFilter')">
+          <input type="hidden" id="reportCategoryFilter" value="">
+          <div class="search-results" id="reportCategoryFilter_results"></div>
         </div>
       </div>
       <div class="toggle-tabs" id="reportPeriodTabs">
@@ -1001,10 +1021,10 @@ body {
     </div>
     <div class="form-group">
       <label>Tipo</label>
-      <select id="fuelType">
-        <option value="petroleo">Petróleo (Diésel)</option>
-        <option value="bencina">Bencina</option>
-      </select>
+      <input type="text" id="fuelType_search" placeholder="Selecciona el tipo" autocomplete="off"
+        oninput="selFilter('fuelType')" onfocus="selFocus('fuelType')" onblur="selBlur('fuelType')">
+      <input type="hidden" id="fuelType" value="petroleo">
+      <div class="search-results" id="fuelType_results"></div>
     </div>
     <div class="form-group">
       <label id="fuelLitersLabel">Litros a ingresar</label>
@@ -1040,26 +1060,17 @@ body {
     </div>
     <div class="form-group">
       <label>Categoría</label>
-      <select id="prodCategory">
-        <option value="fertilizante">Fertilizante</option>
-        <option value="pesticida">Pesticida / Herbicida</option>
-        <option value="semilla">Semilla</option>
-        <option value="herramienta">Herramienta</option>
-        <option value="insumo">Insumo general</option>
-        <option value="otro">Otro</option>
-      </select>
+      <input type="text" id="prodCategory_search" placeholder="Selecciona una categoría" autocomplete="off"
+        oninput="selFilter('prodCategory')" onfocus="selFocus('prodCategory')" onblur="selBlur('prodCategory')">
+      <input type="hidden" id="prodCategory" value="fertilizante">
+      <div class="search-results" id="prodCategory_results"></div>
     </div>
     <div class="form-group">
       <label>Unidad de medida</label>
-      <select id="prodUnit">
-        <option value="kg">Kilos (kg)</option>
-        <option value="lt">Litros (lt)</option>
-        <option value="gr">Gramos (gr)</option>
-        <option value="cc">Centímetros cúbicos (cc)</option>
-        <option value="un">Unidades (un)</option>
-        <option value="sacos">Sacos</option>
-        <option value="cajas">Cajas</option>
-      </select>
+      <input type="text" id="prodUnit_search" placeholder="Selecciona una unidad" autocomplete="off"
+        oninput="selFilter('prodUnit')" onfocus="selFocus('prodUnit')" onblur="selBlur('prodUnit')">
+      <input type="hidden" id="prodUnit" value="kg">
+      <div class="search-results" id="prodUnit_results"></div>
     </div>
     <div class="form-group">
       <label>Stock actual</label>
@@ -1095,15 +1106,10 @@ body {
     </div>
     <div class="form-group" id="movCostCenterGroup" style="display:none">
       <label>Centro de Costo</label>
-      <select id="movCostCenter">
-        <option value="">-- Selecciona --</option>
-        <option value="CEREZAS">Cerezas</option>
-        <option value="CIRUELAS">Ciruelas</option>
-        <option value="MANZANAS">Manzanas</option>
-        <option value="NOGALES">Nogales</option>
-        <option value="NECTARINES">Nectarines</option>
-        <option value="OTRO">Otro</option>
-      </select>
+      <input type="text" id="movCostCenter_search" placeholder="-- Selecciona --" autocomplete="off"
+        oninput="selFilter('movCostCenter')" onfocus="selFocus('movCostCenter')" onblur="selBlur('movCostCenter')">
+      <input type="hidden" id="movCostCenter" value="">
+      <div class="search-results" id="movCostCenter_results"></div>
     </div>
     <div class="form-group" id="movCostGroup" style="display:none">
       <label>Costo total del ingreso</label>
@@ -1255,6 +1261,151 @@ function toggleSort(state, col, defaultDir) {
   if (state.col === col) state.dir = state.dir === 'asc' ? 'desc' : 'asc';
   else { state.col = col; state.dir = defaultDir || 'asc'; }
 }
+
+// ═══════════════════════════════════════════
+//  SEARCHABLE SELECT (generic dropdown-with-search)
+// ═══════════════════════════════════════════
+const selRegistry = {};
+
+function registerSel(fieldId, options, onSelect) {
+  selRegistry[fieldId] = { options, onSelect, matches: [] };
+}
+
+function selRenderResults(fieldId, query) {
+  const state = selRegistry[fieldId];
+  if (!state) return;
+  const list = document.getElementById(fieldId + '_results');
+  const q = (query || '').trim().toLowerCase();
+  let matches = state.options;
+  if (q) matches = state.options.filter(o => o.label.toLowerCase().includes(q));
+  matches = matches.slice(0, 250);
+  state.matches = matches;
+  if (!matches.length) {
+    list.innerHTML = '<div class="result-item" style="color:var(--gray-400)">Sin coincidencias</div>';
+  } else {
+    list.innerHTML = matches.map((o, i) => `<div class="result-item" onmousedown="event.preventDefault();selChooseIndex('${fieldId}',${i})">${o.label}</div>`).join('');
+  }
+  list.classList.add('show');
+}
+
+function selFilter(fieldId) {
+  selRenderResults(fieldId, document.getElementById(fieldId + '_search').value);
+}
+
+function selFocus(fieldId) {
+  document.getElementById(fieldId + '_search').select();
+  selRenderResults(fieldId, '');
+}
+
+function selChooseIndex(fieldId, idx) {
+  const state = selRegistry[fieldId];
+  const opt = state && state.matches[idx];
+  if (!opt) return;
+  document.getElementById(fieldId).value = opt.value;
+  document.getElementById(fieldId + '_search').value = opt.label;
+  document.getElementById(fieldId + '_results').classList.remove('show');
+  if (state.onSelect) state.onSelect(opt.value);
+}
+
+function selBlur(fieldId) {
+  setTimeout(() => {
+    const results = document.getElementById(fieldId + '_results');
+    if (results) results.classList.remove('show');
+    selSetValue(fieldId, document.getElementById(fieldId).value);
+  }, 150);
+}
+
+function selSetValue(fieldId, value) {
+  const state = selRegistry[fieldId];
+  const opt = state && state.options.find(o => String(o.value) === String(value));
+  document.getElementById(fieldId).value = value;
+  document.getElementById(fieldId + '_search').value = opt ? opt.label : '';
+}
+
+function distinctProductNames(products) {
+  const names = Array.from(new Set(products.map(p => p.name))).sort((a, b) => a.localeCompare(b));
+  return names.map(n => ({ value: n, label: n }));
+}
+
+function distinctActivos(products) {
+  const activos = Array.from(new Set(products.filter(p => p.activo).map(p => p.activo))).sort((a, b) => a.localeCompare(b));
+  return activos.map(a => ({ value: a, label: a }));
+}
+
+// ── Static option sets for searchable selects ──
+const CATEGORY_OPTIONS = [
+  { value: 'fertilizante', label: 'Fertilizante' },
+  { value: 'pesticida', label: 'Pesticida' },
+  { value: 'semilla', label: 'Semilla' },
+  { value: 'herramienta', label: 'Herramienta' },
+  { value: 'insumo', label: 'Insumo' },
+  { value: 'otro', label: 'Otro' }
+];
+const CATEGORY_OPTIONS_FORM = [
+  { value: 'fertilizante', label: 'Fertilizante' },
+  { value: 'pesticida', label: 'Pesticida / Herbicida' },
+  { value: 'semilla', label: 'Semilla' },
+  { value: 'herramienta', label: 'Herramienta' },
+  { value: 'insumo', label: 'Insumo general' },
+  { value: 'otro', label: 'Otro' }
+];
+const UNIT_OPTIONS = [
+  { value: 'kg', label: 'Kilos (kg)' },
+  { value: 'lt', label: 'Litros (lt)' },
+  { value: 'gr', label: 'Gramos (gr)' },
+  { value: 'cc', label: 'Centímetros cúbicos (cc)' },
+  { value: 'un', label: 'Unidades (un)' },
+  { value: 'sacos', label: 'Sacos' },
+  { value: 'cajas', label: 'Cajas' }
+];
+const COST_CENTER_OPTIONS = [
+  { value: 'CEREZAS', label: 'Cerezas' },
+  { value: 'CIRUELAS', label: 'Ciruelas' },
+  { value: 'MANZANAS', label: 'Manzanas' },
+  { value: 'NOGALES', label: 'Nogales' },
+  { value: 'NECTARINES', label: 'Nectarines' },
+  { value: 'OTRO', label: 'Otro' }
+];
+const FUEL_TYPE_OPTIONS = [
+  { value: 'petroleo', label: 'Petróleo (Diésel)' },
+  { value: 'bencina', label: 'Bencina' }
+];
+const ROLE_OPTIONS = [
+  { value: 'operario', label: 'Operario' },
+  { value: 'bodeguero', label: 'Bodeguero' },
+  { value: 'admin', label: 'Administrador' }
+];
+const SORT_OPTIONS = [
+  { value: 'name', label: 'Ordenar: Nombre' },
+  { value: 'stock_desc', label: 'Cantidad: mayor a menor' },
+  { value: 'stock_asc', label: 'Cantidad: menor a mayor' }
+];
+
+registerSel('loginRole', ROLE_OPTIONS);
+registerSel('prodCategory', CATEGORY_OPTIONS_FORM);
+registerSel('prodUnit', UNIT_OPTIONS);
+registerSel('fuelType', FUEL_TYPE_OPTIONS);
+registerSel('movCostCenter', [{ value: '', label: '-- Selecciona --' }].concat(COST_CENTER_OPTIONS));
+registerSel('movCostCenterFilter', [{ value: '', label: 'Todos los centros de costo' }].concat(COST_CENTER_OPTIONS), () => renderMovements());
+registerSel('prodListCategoryFilter', [{ value: '', label: 'Todos los tipos' }].concat(CATEGORY_OPTIONS), () => renderProducts());
+registerSel('reportCategoryFilter', [{ value: '', label: 'Todos los tipos' }].concat(CATEGORY_OPTIONS), () => renderReports());
+registerSel('prodListSort', SORT_OPTIONS, () => renderProducts());
+registerSel('prodListNameFilter', [], () => renderProducts());
+registerSel('prodListActivoFilter', [], () => renderProducts());
+registerSel('movListNameFilter', [], () => renderMovements());
+registerSel('movListActivoFilter', [], () => renderMovements());
+registerSel('reportProductNameFilter', [], () => renderReports());
+registerSel('reportProductActivoFilter', [], () => renderReports());
+
+selSetValue('loginRole', 'operario');
+selSetValue('prodCategory', 'fertilizante');
+selSetValue('prodUnit', 'kg');
+selSetValue('fuelType', 'petroleo');
+selSetValue('movCostCenter', '');
+selSetValue('movCostCenterFilter', '');
+selSetValue('prodListCategoryFilter', '');
+selSetValue('reportCategoryFilter', '');
+selSetValue('prodListSort', 'name');
 
 function escapeXML(s) {
   return String(s == null ? '' : s)
@@ -1647,7 +1798,7 @@ function openFuelModal(movType) {
   document.getElementById('fuelSubmitBtn').className = movType === 'ingreso' ? 'btn btn-amber' : 'btn btn-danger';
   document.getElementById('fuelSubmitBtn').textContent = movType === 'ingreso' ? 'Registrar ingreso' : 'Registrar salida';
   document.getElementById('fuelDate').value = today();
-  document.getElementById('fuelType').value = 'petroleo';
+  selSetValue('fuelType', 'petroleo');
   document.getElementById('fuelLiters').value = '';
   document.getElementById('fuelCost').value = '';
   document.getElementById('fuelNote').value = '';
@@ -1934,16 +2085,16 @@ function openProductModal(editId) {
     dbGet('products', editId).then(p => {
       document.getElementById('prodName').value = p.name;
       document.getElementById('prodActivo').value = p.activo || '';
-      document.getElementById('prodCategory').value = p.category;
-      document.getElementById('prodUnit').value = p.unit;
+      selSetValue('prodCategory', p.category);
+      selSetValue('prodUnit', p.unit);
       document.getElementById('prodStock').value = p.stock;
       document.getElementById('prodMinStock').value = p.minStock;
     });
   } else {
     document.getElementById('prodName').value = '';
     document.getElementById('prodActivo').value = '';
-    document.getElementById('prodCategory').value = 'fertilizante';
-    document.getElementById('prodUnit').value = 'kg';
+    selSetValue('prodCategory', 'fertilizante');
+    selSetValue('prodUnit', 'kg');
     document.getElementById('prodStock').value = '';
     document.getElementById('prodMinStock').value = '';
   }
@@ -2000,12 +2151,17 @@ async function deleteProduct(id) {
 
 async function renderProducts() {
   const all = await dbGetAll('products');
-  const q = (document.getElementById('prodListSearch').value || '').trim().toLowerCase();
+  selRegistry.prodListNameFilter.options = [{ value: '', label: 'Todos los productos' }].concat(distinctProductNames(all));
+  selRegistry.prodListActivoFilter.options = [{ value: '', label: 'Todos los ingredientes activos' }].concat(distinctActivos(all));
+
+  const nameFilter = document.getElementById('prodListNameFilter').value;
+  const activoFilter = document.getElementById('prodListActivoFilter').value;
   const catFilter = document.getElementById('prodListCategoryFilter').value;
 
   let items = all.filter(p => {
     if (catFilter && p.category !== catFilter) return false;
-    if (q && !(p.name.toLowerCase().includes(q) || (p.activo && p.activo.toLowerCase().includes(q)))) return false;
+    if (nameFilter && p.name !== nameFilter) return false;
+    if (activoFilter && p.activo !== activoFilter) return false;
     return true;
   });
 
@@ -2081,11 +2237,13 @@ async function renderProducts() {
 
 async function exportProductsExcel() {
   const all = await dbGetAll('products');
-  const q = (document.getElementById('prodListSearch').value || '').trim().toLowerCase();
+  const nameFilter = document.getElementById('prodListNameFilter').value;
+  const activoFilter = document.getElementById('prodListActivoFilter').value;
   const catFilter = document.getElementById('prodListCategoryFilter').value;
   let items = all.filter(p => {
     if (catFilter && p.category !== catFilter) return false;
-    if (q && !(p.name.toLowerCase().includes(q) || (p.activo && p.activo.toLowerCase().includes(q)))) return false;
+    if (nameFilter && p.name !== nameFilter) return false;
+    if (activoFilter && p.activo !== activoFilter) return false;
     return true;
   });
   const rows = items.map(p => ({ ...p, avgCost: p.stock > 0 ? (p.totalValue || 0) / p.stock : 0 }));
@@ -2134,7 +2292,7 @@ async function openMovementModal(type) {
   document.getElementById('movSubmitBtn').className = type === 'ingreso' ? 'btn btn-primary' : 'btn btn-danger';
   document.getElementById('movSubmitBtn').textContent = type === 'ingreso' ? 'Registrar ingreso' : 'Registrar salida';
   document.getElementById('movCostCenterGroup').style.display = type === 'salida' ? 'block' : 'none';
-  document.getElementById('movCostCenter').value = '';
+  selSetValue('movCostCenter', '');
   document.getElementById('movCostGroup').style.display = type === 'ingreso' ? 'block' : 'none';
   document.getElementById('movCost').value = '';
   document.getElementById('movDate').value = today();
@@ -2260,21 +2418,19 @@ async function renderMovements() {
   const byId = {};
   products.forEach(p => byId[p.id] = p);
 
+  selRegistry.movListNameFilter.options = [{ value: '', label: 'Todos los productos' }].concat(distinctProductNames(products));
+  selRegistry.movListActivoFilter.options = [{ value: '', label: 'Todos los ingredientes activos' }].concat(distinctActivos(products));
+
   if (movFilterType !== 'all') items = items.filter(i => i.type === movFilterType);
 
   const ccFilter = document.getElementById('movCostCenterFilter').value;
   if (ccFilter) items = items.filter(i => i.costCenter === ccFilter);
 
-  const q = (document.getElementById('movListSearch').value || '').trim().toLowerCase();
-  if (q) {
-    items = items.filter(i => {
-      const p = byId[i.productId];
-      return i.productName.toLowerCase().includes(q) ||
-        (i.note && i.note.toLowerCase().includes(q)) ||
-        (i.costCenter && i.costCenter.toLowerCase().includes(q)) ||
-        (p && p.activo && p.activo.toLowerCase().includes(q));
-    });
-  }
+  const nameFilter = document.getElementById('movListNameFilter').value;
+  if (nameFilter) items = items.filter(i => i.productName === nameFilter);
+
+  const activoFilter = document.getElementById('movListActivoFilter').value;
+  if (activoFilter) items = items.filter(i => { const p = byId[i.productId]; return p && p.activo === activoFilter; });
 
   const el = document.getElementById('movementList');
   if (!items.length) {
@@ -2353,16 +2509,10 @@ async function exportMovementsExcel() {
   if (movFilterType !== 'all') items = items.filter(i => i.type === movFilterType);
   const ccFilter = document.getElementById('movCostCenterFilter').value;
   if (ccFilter) items = items.filter(i => i.costCenter === ccFilter);
-  const q = (document.getElementById('movListSearch').value || '').trim().toLowerCase();
-  if (q) {
-    items = items.filter(i => {
-      const p = byId[i.productId];
-      return i.productName.toLowerCase().includes(q) ||
-        (i.note && i.note.toLowerCase().includes(q)) ||
-        (i.costCenter && i.costCenter.toLowerCase().includes(q)) ||
-        (p && p.activo && p.activo.toLowerCase().includes(q));
-    });
-  }
+  const nameFilter = document.getElementById('movListNameFilter').value;
+  if (nameFilter) items = items.filter(i => i.productName === nameFilter);
+  const activoFilter = document.getElementById('movListActivoFilter').value;
+  if (activoFilter) items = items.filter(i => { const p = byId[i.productId]; return p && p.activo === activoFilter; });
 
   const rows = items.map(m => ({
     ...m,
@@ -2551,7 +2701,8 @@ async function getReportDetailRows() {
     const byId = {};
     products.forEach(p => byId[p.id] = p);
 
-    const q = (document.getElementById('reportProductSearch').value || '').trim().toLowerCase();
+    const nameFilter = document.getElementById('reportProductNameFilter').value;
+    const activoFilter = document.getElementById('reportProductActivoFilter').value;
     const catFilter = document.getElementById('reportCategoryFilter').value;
 
     return movs
@@ -2559,7 +2710,8 @@ async function getReportDetailRows() {
       .filter(m => {
         const p = byId[m.productId];
         if (catFilter && (!p || p.category !== catFilter)) return false;
-        if (q && !(m.productName.toLowerCase().includes(q) || (p && p.activo && p.activo.toLowerCase().includes(q)))) return false;
+        if (nameFilter && m.productName !== nameFilter) return false;
+        if (activoFilter && (!p || p.activo !== activoFilter)) return false;
         return true;
       })
       .map(m => ({
@@ -2599,6 +2751,11 @@ async function getReportDetailRows() {
 async function renderReports() {
   const from = document.getElementById('reportDateFrom').value || dateOffset(6);
   const to = document.getElementById('reportDateTo').value || dateOffset(0);
+  if (reportType === 'bodega') {
+    const products = await dbGetAll('products');
+    selRegistry.reportProductNameFilter.options = [{ value: '', label: 'Todos los productos' }].concat(distinctProductNames(products));
+    selRegistry.reportProductActivoFilter.options = [{ value: '', label: 'Todos los ingredientes activos' }].concat(distinctActivos(products));
+  }
   const detailRows = await getReportDetailRows();
   reportShowCatCols = reportType === 'bodega';
 
